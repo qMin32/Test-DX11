@@ -1,0 +1,1 @@
+D:\x64 9ex\test\m2dev-client-src\vendor\freetype-2.13.3\objs\x64\Debug Static\freetype.lib
