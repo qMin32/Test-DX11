@@ -15,8 +15,6 @@ struct SoftwareTransformPatch_SSplatVertex
 	D3DXVECTOR2 kTex2;
 };
 
-
-
 void CMapOutdoor::__RenderTerrain_RenderSoftwareTransformPatch()
 {	
 	SoftwareTransformPatch_SRenderState kTPRS;

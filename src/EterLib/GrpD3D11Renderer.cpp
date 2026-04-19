@@ -5,6 +5,7 @@
 #include "EterBase/Debug.h"
 #include "qMin32Lib/ConstantBuffer.h"
 #include "qMin32Lib/DxManager.h"
+#include "qMin32Lib/ConstantBufferManager.h"
 #include "GrpBase.h"
 
 CD3D11Renderer::CD3D11Renderer()
@@ -21,12 +22,6 @@ CD3D11Renderer::~CD3D11Renderer()
 
 bool CD3D11Renderer::CreateConstantBuffers()
 {
-	_mgr->CreateConstantBuffer(m_pCBPerFrame, sizeof(CBPerFrame));
-	_mgr->CreateConstantBuffer(m_pCBMaterial, sizeof(CBMaterial));
-	_mgr->CreateConstantBuffer(m_pCBLighting, sizeof(CBLighting));
-	_mgr->CreateConstantBuffer(m_pCBTexTransform, sizeof(CBTexTransform));
-	_mgr->CreateConstantBuffer(m_pCBFog, sizeof(CBFog));
-	_mgr->CreateConstantBuffer(m_pCBScreenSize, sizeof(CBScreenSize));
 
 	return true;
 }
@@ -86,48 +81,49 @@ bool CD3D11Renderer::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pCon
 	m_curRasterKey.scissorEnable = FALSE;
 
 	// Default material CB
-	m_cbMaterial.textureFactor[0] = m_cbMaterial.textureFactor[1] = m_cbMaterial.textureFactor[2] = m_cbMaterial.textureFactor[3] = 1.0f;
-	m_cbMaterial.useTexture0 = 1;
-	m_cbMaterial.useTexture1 = 0;
-	m_cbMaterial.colorOp0 = 0;
-	m_cbMaterial.alphaOp0 = 1;
-	m_cbMaterial.colorOp1 = -1;
-	m_cbMaterial.alphaOp1 = -1;
-	m_cbMaterial.colorArg10 = TA11_TEXTURE;
-	m_cbMaterial.colorArg20 = TA11_DIFFUSE;
-	m_cbMaterial.alphaArg10 = TA11_TEXTURE;
-	m_cbMaterial.alphaArg20 = TA11_DIFFUSE;
-	m_cbMaterial.colorArg11 = TA11_TEXTURE;
-	m_cbMaterial.colorArg21 = TA11_CURRENT;
-	m_cbMaterial.alphaArg11 = TA11_TEXTURE;
-	m_cbMaterial.alphaArg21 = TA11_CURRENT;
-	m_cbMaterial.texCoordGen1 = 0;
+	_mgr->GetCbMgr()->m_cbMaterial.textureFactor[0] = _mgr->GetCbMgr()->m_cbMaterial.textureFactor[1] = _mgr->GetCbMgr()->m_cbMaterial.textureFactor[2] = _mgr->GetCbMgr()->m_cbMaterial.textureFactor[3] = 1.0f;
+	_mgr->GetCbMgr()->m_cbMaterial.useTexture0 = 1;
+	_mgr->GetCbMgr()->m_cbMaterial.useTexture1 = 0;
+	_mgr->GetCbMgr()->m_cbMaterial.colorOp0 = 0;
+	_mgr->GetCbMgr()->m_cbMaterial.alphaOp0 = 1;
+	_mgr->GetCbMgr()->m_cbMaterial.colorOp1 = -1;
+	_mgr->GetCbMgr()->m_cbMaterial.alphaOp1 = -1;
+	_mgr->GetCbMgr()->m_cbMaterial.colorArg10 = TA11_TEXTURE;
+	_mgr->GetCbMgr()->m_cbMaterial.colorArg20 = TA11_DIFFUSE;
+	_mgr->GetCbMgr()->m_cbMaterial.alphaArg10 = TA11_TEXTURE;
+	_mgr->GetCbMgr()->m_cbMaterial.alphaArg20 = TA11_DIFFUSE;
+	_mgr->GetCbMgr()->m_cbMaterial.colorArg11 = TA11_TEXTURE;
+	_mgr->GetCbMgr()->m_cbMaterial.colorArg21 = TA11_CURRENT;
+	_mgr->GetCbMgr()->m_cbMaterial.alphaArg11 = TA11_TEXTURE;
+	_mgr->GetCbMgr()->m_cbMaterial.alphaArg21 = TA11_CURRENT;
+	_mgr->GetCbMgr()->m_cbMaterial.texCoordGen1 = 0;
 
 	// Default lighting
-	m_cbLighting.lightAmbient[0] = m_cbLighting.lightAmbient[1] = m_cbLighting.lightAmbient[2] = 0.0f;
-	m_cbLighting.lightAmbient[3] = 1.0f;
-	m_cbLighting.matDiffuse[0] = m_cbLighting.matDiffuse[1] = m_cbLighting.matDiffuse[2] = m_cbLighting.matDiffuse[3] = 1.0f;
-	m_cbLighting.matAmbient[0] = m_cbLighting.matAmbient[1] = m_cbLighting.matAmbient[2] = m_cbLighting.matAmbient[3] = 1.0f;
+	_mgr->GetCbMgr()->m_cbLighting.lightAmbient[0] = _mgr->GetCbMgr()->m_cbLighting.lightAmbient[1] = _mgr->GetCbMgr()->m_cbLighting.lightAmbient[2] = 0.0f;
+	_mgr->GetCbMgr()->m_cbLighting.lightAmbient[3] = 1.0f;
+	_mgr->GetCbMgr()->m_cbLighting.matDiffuse[0] = _mgr->GetCbMgr()->m_cbLighting.matDiffuse[1] = _mgr->GetCbMgr()->m_cbLighting.matDiffuse[2] = _mgr->GetCbMgr()->m_cbLighting.matDiffuse[3] = 1.0f;
+	_mgr->GetCbMgr()->m_cbLighting.matAmbient[0] = _mgr->GetCbMgr()->m_cbLighting.matAmbient[1] = _mgr->GetCbMgr()->m_cbLighting.matAmbient[2] = _mgr->GetCbMgr()->m_cbLighting.matAmbient[3] = 1.0f;
 
 	// Default transforms — identity
-	D3DXMatrixIdentity(&m_cbPerFrame.matWorld);
-	D3DXMatrixIdentity(&m_cbPerFrame.matView);
-	D3DXMatrixIdentity(&m_cbPerFrame.matProj);
-	D3DXMatrixIdentity(&m_cbTexTransform.matTexTransform0);
-	D3DXMatrixIdentity(&m_cbTexTransform.matTexTransform1);
+	D3DXMatrixIdentity(&_mgr->GetCbMgr()->m_cbPerFrame.matWorld);
+	D3DXMatrixIdentity(&_mgr->GetCbMgr()->m_cbPerFrame.matView);
+	D3DXMatrixIdentity(&_mgr->GetCbMgr()->m_cbPerFrame.matProj);
+	D3DXMatrixIdentity(&_mgr->GetCbMgr()->m_cbTexTransform.matTexTransform0);
+	D3DXMatrixIdentity(&_mgr->GetCbMgr()->m_cbTexTransform.matTexTransform1);
 
 	// Flush everything
-	m_bTransformDirty = m_bMaterialDirty = m_bLightingDirty = m_bFogDirty = true;
+	_mgr->GetCbMgr()->m_bTransformDirty = _mgr->GetCbMgr()->m_bMaterialDirty = _mgr->GetCbMgr()->m_bLightingDirty = _mgr->GetCbMgr()->m_bFogDirty = true;
 	m_bBlendDirty = m_bDepthDirty = m_bRasterDirty = true;
+
 	FlushAllState();
 
 	// Bind constant buffers to all shader stages
-	_mgr->SetConstantBuffer(m_pCBPerFrame, 0);
-	_mgr->SetConstantBuffer(m_pCBMaterial, 1);
-	_mgr->SetConstantBuffer(m_pCBLighting, 2);
-	_mgr->SetConstantBuffer(m_pCBTexTransform, 3);
-	_mgr->SetConstantBuffer(m_pCBFog, 4);
-	_mgr->SetConstantBuffer(m_pCBScreenSize, 5);
+	_mgr->SetConstantBuffer(_mgr->GetCbMgr()->m_pCBPerFrame, 0);
+	_mgr->SetConstantBuffer(_mgr->GetCbMgr()->m_pCBMaterial, 1);
+	_mgr->SetConstantBuffer(_mgr->GetCbMgr()->m_pCBLighting, 2);
+	_mgr->SetConstantBuffer(_mgr->GetCbMgr()->m_pCBTexTransform, 3);
+	_mgr->SetConstantBuffer(_mgr->GetCbMgr()->m_pCBFog, 4);
+	_mgr->SetConstantBuffer(_mgr->GetCbMgr()->m_pCBScreenSize, 5);
 
 	Tracenf("D3D11Renderer: Initialization complete");
 	return true;
@@ -173,37 +169,6 @@ ED3D11VertexFormat CD3D11Renderer::DetectVertexFormat(DWORD dwFVF)
 
 	// Default
 	return VF_PDT;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Transform updates
-///////////////////////////////////////////////////////////////////////////////
-void CD3D11Renderer::SetWorldMatrix(const D3DXMATRIX& mat)
-{
-	m_cbPerFrame.matWorld = mat;
-	m_bTransformDirty = true;
-}
-
-void CD3D11Renderer::SetViewMatrix(const D3DXMATRIX& mat)
-{
-	m_cbPerFrame.matView = mat;
-	m_bTransformDirty = true;
-}
-
-void CD3D11Renderer::SetProjMatrix(const D3DXMATRIX& mat)
-{
-	m_cbPerFrame.matProj = mat;
-	m_bTransformDirty = true;
-}
-
-void CD3D11Renderer::FlushTransforms()
-{
-	if (!m_bTransformDirty)
-		return;
-
-	m_pCBPerFrame->Update(m_cbPerFrame);
-
-	m_bTransformDirty = false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -328,160 +293,16 @@ void CD3D11Renderer::FlushRasterState()
 ///////////////////////////////////////////////////////////////////////////////
 void CD3D11Renderer::SetAlphaTestEnable(BOOL bEnable)
 {
-	m_cbMaterial.alphaTestEnable = bEnable ? 1 : 0;
-	m_bMaterialDirty = true;
+	_mgr->GetCbMgr()->m_cbMaterial.alphaTestEnable = bEnable ? 1 : 0;
+	_mgr->GetCbMgr()->m_bMaterialDirty = true;
 }
 
 void CD3D11Renderer::SetAlphaRef(DWORD dwRef)
 {
-	m_cbMaterial.alphaRef = (int)(dwRef & 0xFF);
-	m_bMaterialDirty = true;
+	_mgr->GetCbMgr()->m_cbMaterial.alphaRef = (int)(dwRef & 0xFF);
+	_mgr->GetCbMgr()->m_bMaterialDirty = true;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// Lighting
-///////////////////////////////////////////////////////////////////////////////
-void CD3D11Renderer::SetLightingEnable(BOOL bEnable)
-{
-	m_cbLighting.lightingEnable = bEnable ? 1 : 0;
-	m_bLightingDirty = true;
-}
-
-void CD3D11Renderer::SetLight(DWORD index, const D3DLIGHT9* pLight)
-{
-	if (index > 0 || !pLight) return; // Only support light 0 for now
-
-	m_cbLighting.lightDir[0] = pLight->Direction.x;
-	m_cbLighting.lightDir[1] = pLight->Direction.y;
-	m_cbLighting.lightDir[2] = pLight->Direction.z;
-	m_cbLighting.lightDir[3] = 0.0f;
-
-	m_cbLighting.lightDiffuse[0] = pLight->Diffuse.r;
-	m_cbLighting.lightDiffuse[1] = pLight->Diffuse.g;
-	m_cbLighting.lightDiffuse[2] = pLight->Diffuse.b;
-	m_cbLighting.lightDiffuse[3] = pLight->Diffuse.a;
-
-	m_bLightingDirty = true;
-}
-
-void CD3D11Renderer::SetMaterial(const D3DMATERIAL9* pMaterial)
-{
-	m_cbLighting.matDiffuse[0] = pMaterial->Diffuse.r;
-	m_cbLighting.matDiffuse[1] = pMaterial->Diffuse.g;
-	m_cbLighting.matDiffuse[2] = pMaterial->Diffuse.b;
-	m_cbLighting.matDiffuse[3] = pMaterial->Diffuse.a;
-
-	m_cbLighting.matAmbient[0] = pMaterial->Ambient.r;
-	m_cbLighting.matAmbient[1] = pMaterial->Ambient.g;
-	m_cbLighting.matAmbient[2] = pMaterial->Ambient.b;
-	m_cbLighting.matAmbient[3] = pMaterial->Ambient.a;
-
-	m_cbLighting.matEmissive[0] = pMaterial->Emissive.r;
-	m_cbLighting.matEmissive[1] = pMaterial->Emissive.g;
-	m_cbLighting.matEmissive[2] = pMaterial->Emissive.b;
-	m_cbLighting.matEmissive[3] = pMaterial->Emissive.a;
-
-	m_bLightingDirty = true;
-}
-
-void CD3D11Renderer::SetAmbient(DWORD dwColor)
-{
-	m_cbLighting.lightAmbient[0] = ((dwColor >> 16) & 0xFF) / 255.0f;
-	m_cbLighting.lightAmbient[1] = ((dwColor >> 8) & 0xFF) / 255.0f;
-	m_cbLighting.lightAmbient[2] = (dwColor & 0xFF) / 255.0f;
-	m_cbLighting.lightAmbient[3] = ((dwColor >> 24) & 0xFF) / 255.0f;
-	m_bLightingDirty = true;
-}
-
-void CD3D11Renderer::FlushLighting()
-{
-	if (!m_bLightingDirty) return;
-
-	m_pCBLighting->Update(m_cbLighting);
-
-	m_bLightingDirty = false;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Fog
-///////////////////////////////////////////////////////////////////////////////
-void CD3D11Renderer::SetFogEnable(BOOL bEnable) { m_cbFog.fogEnable = bEnable ? 1 : 0; m_bFogDirty = true; }
-void CD3D11Renderer::SetFogColor(DWORD dwColor)
-{
-	// D3D9 DWORD color format is 0xAARRGGBB
-	m_cbFog.fogColor[0] = ((dwColor >> 16) & 0xFF) / 255.0f;	// R
-	m_cbFog.fogColor[1] = ((dwColor >> 8) & 0xFF) / 255.0f;	// G
-	m_cbFog.fogColor[2] = (dwColor & 0xFF) / 255.0f;	// B
-	m_cbFog.fogColor[3] = 1.0f;
-	m_bFogDirty = true;
-}
-void CD3D11Renderer::SetFogStart(float fStart) { m_cbFog.fogStart = fStart; m_bFogDirty = true; }
-void CD3D11Renderer::SetFogEnd(float fEnd) { m_cbFog.fogEnd = fEnd; m_bFogDirty = true; }
-
-void CD3D11Renderer::FlushFog()
-{
-	if (!m_bFogDirty) return;
-	m_pCBFog->Update(m_cbFog);
-
-	m_bFogDirty = false;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Material / texture stage state emulation
-///////////////////////////////////////////////////////////////////////////////
-void CD3D11Renderer::SetTextureFactor(DWORD dwFactor)
-{
-	// D3D9 DWORD color format is 0xAARRGGBB
-	m_cbMaterial.textureFactor[0] = ((dwFactor >> 16) & 0xFF) / 255.0f;	// R
-	m_cbMaterial.textureFactor[1] = ((dwFactor >> 8) & 0xFF) / 255.0f;	// G
-	m_cbMaterial.textureFactor[2] = (dwFactor & 0xFF) / 255.0f;	// B
-	m_cbMaterial.textureFactor[3] = ((dwFactor >> 24) & 0xFF) / 255.0f;	// A
-	m_bMaterialDirty = true;
-}
-
-void CD3D11Renderer::SetTextureStageOp(DWORD dwStage, int colorOp, int alphaOp)
-{
-	if (dwStage == 0) { m_cbMaterial.colorOp0 = colorOp; m_cbMaterial.alphaOp0 = alphaOp; }
-	else if (dwStage == 1) { m_cbMaterial.colorOp1 = colorOp; m_cbMaterial.alphaOp1 = alphaOp; }
-	m_bMaterialDirty = true;
-}
-
-void CD3D11Renderer::SetTextureStageArgs(DWORD dwStage, int colorArg1, int colorArg2, int alphaArg1, int alphaArg2)
-{
-	if (dwStage == 0)
-	{
-		m_cbMaterial.colorArg10 = colorArg1;
-		m_cbMaterial.colorArg20 = colorArg2;
-		m_cbMaterial.alphaArg10 = alphaArg1;
-		m_cbMaterial.alphaArg20 = alphaArg2;
-	}
-	else if (dwStage == 1)
-	{
-		m_cbMaterial.colorArg11 = colorArg1;
-		m_cbMaterial.colorArg21 = colorArg2;
-		m_cbMaterial.alphaArg11 = alphaArg1;
-		m_cbMaterial.alphaArg21 = alphaArg2;
-	}
-	m_bMaterialDirty = true;
-}
-
-void CD3D11Renderer::SetTexCoordGen(DWORD dwStage, int mode)
-{
-	if (dwStage == 1)
-	{
-		m_cbMaterial.texCoordGen1 = mode;
-		m_bMaterialDirty = true;
-	}
-}
-
-void CD3D11Renderer::FlushMaterial()
-{
-	if (!m_bMaterialDirty) return;
-
-	m_pCBMaterial->Update(m_cbMaterial);
-
-	m_bMaterialDirty = false;
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Texture binding
@@ -489,10 +310,10 @@ void CD3D11Renderer::FlushMaterial()
 void CD3D11Renderer::SetTexture(DWORD dwStage, ID3D11ShaderResourceView* pSRV)
 {
 	if (dwStage == 0)
-		m_cbMaterial.useTexture0 = pSRV ? 1 : 0;
+		_mgr->GetCbMgr()->m_cbMaterial.useTexture0 = pSRV ? 1 : 0;
 	else if (dwStage == 1)
-		m_cbMaterial.useTexture1 = pSRV ? 1 : 0;
-	m_bMaterialDirty = true;
+		_mgr->GetCbMgr()->m_cbMaterial.useTexture1 = pSRV ? 1 : 0;
+	_mgr->GetCbMgr()->m_bMaterialDirty = true;
 
 	if (!pSRV)
 	{
@@ -507,22 +328,7 @@ void CD3D11Renderer::SetTexture(DWORD dwStage, ID3D11ShaderResourceView* pSRV)
 ///////////////////////////////////////////////////////////////////////////////
 // Texture transform
 ///////////////////////////////////////////////////////////////////////////////
-void CD3D11Renderer::SetTexTransform(DWORD dwStage, const D3DXMATRIX& mat)
-{
-	if (dwStage == 0)
-		m_cbTexTransform.matTexTransform0 = mat;
-	else if (dwStage == 1)
-		m_cbTexTransform.matTexTransform1 = mat;
-	else
-		return;
 
-	m_pCBTexTransform->Update(m_cbTexTransform);
-}
-
-void CD3D11Renderer::SetTexTransform(const D3DXMATRIX& mat)
-{
-	SetTexTransform(0, mat);
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Sampler state
@@ -549,6 +355,8 @@ ID3D11SamplerState* CD3D11Renderer::GetOrCreateSamplerState(const SD3D11SamplerK
 	return pState;
 }
 
+
+
 void CD3D11Renderer::SetSamplerState(DWORD dwStage, D3D11_FILTER filter, D3D11_TEXTURE_ADDRESS_MODE addrU, D3D11_TEXTURE_ADDRESS_MODE addrV)
 {
 	if (!m_pDevice || !m_pContext)
@@ -571,10 +379,7 @@ void CD3D11Renderer::SetSamplerState(DWORD dwStage, D3D11_FILTER filter, D3D11_T
 ///////////////////////////////////////////////////////////////////////////////
 void CD3D11Renderer::SetScreenSize(float width, float height)
 {
-	m_cbScreenSize.screenWidth = width;
-	m_cbScreenSize.screenHeight = height;
-
-	m_pCBScreenSize->Update(m_cbScreenSize);
+	_mgr->GetCbMgr()->SetScreenSize(width, height);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -582,10 +387,10 @@ void CD3D11Renderer::SetScreenSize(float width, float height)
 ///////////////////////////////////////////////////////////////////////////////
 void CD3D11Renderer::FlushAllState()
 {
-	FlushTransforms();
-	FlushMaterial();
-	FlushLighting();
-	FlushFog();
+	_mgr->GetCbMgr()->FlushTransforms();
+	_mgr->GetCbMgr()->FlushMaterial();
+	_mgr->GetCbMgr()->FlushLighting();
+	_mgr->GetCbMgr()->FlushFog();
 	FlushBlendState();
 	FlushDepthState();
 	FlushRasterState();
@@ -607,4 +412,9 @@ void CD3D11Renderer::Destroy()
 
 	for (auto& pair : m_mapSamplerStates) safe_release(pair.second);
 	m_mapSamplerStates.clear();
+}
+
+CBManagerPtr CD3D11Renderer::GetCbMgr()
+{
+	return _mgr->GetCbMgr();
 }

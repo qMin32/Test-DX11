@@ -55,8 +55,6 @@ void CGraphicDevice::__Initialize()
 
 	m_pStateManager		= NULL;
 	m_pD3D11Renderer	= NULL;
-
-	__InitializePDTVertexBufferList();
 }
 
 void CGraphicDevice::RegisterWarningString(UINT uiMsg, const char * c_szString)
@@ -363,38 +361,15 @@ int CGraphicDevice::Create(HWND hWnd, int iHres, int iVres, bool Windowed, int /
 	return (iRet);
 }
 
-void CGraphicDevice::__InitializePDTVertexBufferList()
-{
-	for (UINT i=0; i<PDT_VERTEXBUFFER_NUM; ++i)
-		ms_alpd3dPDTVB[i]=NULL;	
-}
-		
-void CGraphicDevice::__DestroyPDTVertexBufferList()
-{
-	for (UINT i=0; i<PDT_VERTEXBUFFER_NUM; ++i)
-	{
-		if (ms_alpd3dPDTVB[i])
-		{
-			ms_alpd3dPDTVB[i]->Release();
-			ms_alpd3dPDTVB[i]=NULL;
-		}
-	}
-}
-
 bool CGraphicDevice::__CreatePDTVertexBufferList()
 {
 	if (!ms_lpd3d11Device)
 		return false;
 
-	D3D11_BUFFER_DESC bd = {};
-	bd.ByteWidth = sizeof(TPDTVertex) * PDT_VERTEX_NUM;
-	bd.Usage = D3D11_USAGE_DYNAMIC;
-	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-
 	for (UINT i = 0; i < PDT_VERTEXBUFFER_NUM; ++i)
 	{
-		if (FAILED(ms_lpd3d11Device->CreateBuffer(&bd, NULL, &ms_alpd3dPDTVB[i])))
+	    m_mgr->CreateVertexBuffer(ms_alpd3dPDTVB[i], nullptr, PDT_VERTEX_NUM, sizeof(TPDTVertex), true);
+		if (!ms_alpd3dPDTVB[i])
 			return false;
 	}
 	return true;
@@ -458,8 +433,6 @@ void CGraphicDevice::InitBackBufferCount(UINT uBackBufferCount)
 
 void CGraphicDevice::Destroy()
 {
-	__DestroyPDTVertexBufferList();
-
 	if (ms_hDC)
 	{
 		ReleaseDC(ms_hWnd, ms_hDC);

@@ -2,6 +2,7 @@
 #include "StateManager.h"
 #include "GrpLightManager.h"
 #include "GrpD3D11Renderer.h"
+#include "qMin32Lib/ConstantBufferManager.h"
 
 // Global per-frame draw call counter (always-on, not just debug)
 static int g_frameDrawCount = 0;
@@ -24,7 +25,7 @@ void CStateManager::SetLight(DWORD index, CONST D3DLIGHT9* pLight)
 	m_kLightData.m_akD3DLight[index] = *pLight;
 
 	if (m_pD3D11Renderer)
-		m_pD3D11Renderer->SetLight(index, pLight);
+		m_pD3D11Renderer->GetCbMgr()->SetLight(index, pLight);
 }
 
 void CStateManager::GetLight(DWORD index, D3DLIGHT9* pLight)
@@ -335,7 +336,7 @@ void CStateManager::SetMaterial(const D3DMATERIAL9* pMaterial)
 	m_CurrentState.m_D3DMaterial = *pMaterial;
 
 	if (m_pD3D11Renderer)
-		m_pD3D11Renderer->SetMaterial(pMaterial);
+		m_pD3D11Renderer->GetCbMgr()->SetMaterial(pMaterial);
 }
 
 void CStateManager::GetMaterial(D3DMATERIAL9* pMaterial)
@@ -416,27 +417,27 @@ void CStateManager::SetRenderState(ERenderState11 Type, DWORD Value)
 		case RS11_SCISSORTESTENABLE:m_pD3D11Renderer->SetScissorEnable(Value); break;
 		case RS11_COLORWRITEENABLE: m_pD3D11Renderer->SetColorWriteEnable((BYTE)Value); break;
 
-		case RS11_LIGHTING:         m_pD3D11Renderer->SetLightingEnable(Value); break;
-		case RS11_AMBIENT:          m_pD3D11Renderer->SetAmbient(Value); break;
+		case RS11_LIGHTING:         m_pD3D11Renderer->GetCbMgr()->SetLightingEnable(Value); break;
+		case RS11_AMBIENT:          m_pD3D11Renderer->GetCbMgr()->SetAmbient(Value); break;
 
-		case RS11_FOGENABLE:        m_pD3D11Renderer->SetFogEnable(Value); break;
-		case RS11_FOGCOLOR:         m_pD3D11Renderer->SetFogColor(Value); break;
+		case RS11_FOGENABLE:        m_pD3D11Renderer->GetCbMgr()->SetFogEnable(Value); break;
+		case RS11_FOGCOLOR:         m_pD3D11Renderer->GetCbMgr()->SetFogColor(Value); break;
 
 		case RS11_FOGSTART:
 		{
 			float f; memcpy(&f, &Value, sizeof(float));
-			m_pD3D11Renderer->SetFogStart(f);
+			m_pD3D11Renderer->GetCbMgr()->SetFogStart(f);
 			break;
 		}
 
 		case RS11_FOGEND:
 		{
 			float f; memcpy(&f, &Value, sizeof(float));
-			m_pD3D11Renderer->SetFogEnd(f);
+			m_pD3D11Renderer->GetCbMgr()->SetFogEnd(f);
 			break;
 		}
 
-		case RS11_TEXTUREFACTOR:    m_pD3D11Renderer->SetTextureFactor(Value); break;
+		case RS11_TEXTUREFACTOR:    m_pD3D11Renderer->GetCbMgr()->SetTextureFactor(Value); break;
 		}
 	}
 }
@@ -507,7 +508,7 @@ void CStateManager::SetTextureStageState(DWORD dwStage, ETextureStageState11 Typ
 		{
 			int colorOp = MapTextureOp(m_CurrentState.m_TextureStates[dwStage][TSS11_COLOROP]);
 			int alphaOp = MapTextureOp(m_CurrentState.m_TextureStates[dwStage][TSS11_ALPHAOP]);
-			m_pD3D11Renderer->SetTextureStageOp(dwStage, colorOp, alphaOp);
+			m_pD3D11Renderer->GetCbMgr()->SetTextureStageOp(dwStage, colorOp, alphaOp);
 		}
 
 		if (Type == TSS11_COLORARG1 || Type == TSS11_COLORARG2 ||
@@ -517,7 +518,7 @@ void CStateManager::SetTextureStageState(DWORD dwStage, ETextureStageState11 Typ
 			int colorArg2 = (int)m_CurrentState.m_TextureStates[dwStage][TSS11_COLORARG2];
 			int alphaArg1 = (int)m_CurrentState.m_TextureStates[dwStage][TSS11_ALPHAARG1];
 			int alphaArg2 = (int)m_CurrentState.m_TextureStates[dwStage][TSS11_ALPHAARG2];
-			m_pD3D11Renderer->SetTextureStageArgs(dwStage, colorArg1, colorArg2, alphaArg1, alphaArg2);
+			m_pD3D11Renderer->GetCbMgr()->SetTextureStageArgs(dwStage, colorArg1, colorArg2, alphaArg1, alphaArg2);
 		}
 
 		if (Type == TSS11_TEXCOORDINDEX)
@@ -530,7 +531,7 @@ void CStateManager::SetTextureStageState(DWORD dwStage, ETextureStageState11 Typ
 				mode = 2;
 			else if (tciFlags == TSS11_TCI_CAMERASPACENORMAL)
 				mode = 3;
-			m_pD3D11Renderer->SetTexCoordGen(dwStage, mode);
+			m_pD3D11Renderer->GetCbMgr()->SetTexCoordGen(dwStage, mode);
 		}
 	}
 }
@@ -751,15 +752,15 @@ void CStateManager::SetTransform(ETransform Type, const D3DXMATRIX* pMatrix)
 	if (m_pD3D11Renderer)
 	{
 		if (Type == World)
-			m_pD3D11Renderer->SetWorldMatrix(*pMatrix);
+			m_pD3D11Renderer->GetCbMgr()->SetWorldMatrix(*pMatrix);
 		else if (Type == View)
-			m_pD3D11Renderer->SetViewMatrix(*pMatrix);
+			m_pD3D11Renderer->GetCbMgr()->SetViewMatrix(*pMatrix);
 		else if (Type == Projection)
-			m_pD3D11Renderer->SetProjMatrix(*pMatrix);
+			m_pD3D11Renderer->GetCbMgr()->SetProjMatrix(*pMatrix);
 		else if (Type == Texture0)
-			m_pD3D11Renderer->SetTexTransform(0, *pMatrix);
+			m_pD3D11Renderer->GetCbMgr()->SetTexTransform(0, *pMatrix);
 		else if (Type == Texture1)
-			m_pD3D11Renderer->SetTexTransform(1, *pMatrix);
+			m_pD3D11Renderer->GetCbMgr()->SetTexTransform(1, *pMatrix);
 	}
 }
 

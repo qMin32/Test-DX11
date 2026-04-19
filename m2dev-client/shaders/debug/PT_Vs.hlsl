@@ -1,8 +1,18 @@
-cbuffer cbPerFrame : register(b0) { row_major float4x4 matWorld; row_major float4x4 matView; row_major float4x4 matProj; };
-cbuffer cbTexTransform : register(b3) { row_major float4x4 matTexTransform0; row_major float4x4 matTexTransform1; };
+#include "common.hlsli"
 
-struct VS_INPUT  { float3 pos : POSITION; float2 tex : TEXCOORD0; };
-struct VS_OUTPUT { float4 pos : SV_POSITION; float2 tex0 : TEXCOORD0; float viewDepth : TEXCOORD1; float2 tex1 : TEXCOORD2; };
+struct VS_INPUT  
+{ 
+	float3 pos : POSITION; 
+	float2 tex : TEXCOORD0;
+};
+
+struct VS_OUTPUT 
+{
+	float4 pos : SV_POSITION; 
+	float2 tex0 : TEXCOORD0;
+	float viewDepth : TEXCOORD1;
+	float2 tex1 : TEXCOORD2;
+};
 
 VS_OUTPUT main(VS_INPUT input)
 {

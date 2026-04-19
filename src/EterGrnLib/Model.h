@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Eterlib/GrpVertexBuffer.h"
 #include "qMin32Lib/Core.h"
 
 #include "Mesh.h"
@@ -38,19 +37,16 @@ class CGrannyModel : public CReferenceObject
 		granny_model * GetGrannyModelPointer();
 		const CGrannyMesh* GetMeshPointer(int iMesh) const;
 
-		ID3D11Buffer* GetPNTD3DVertexBuffer() const;
+		VBufferPtr GetVertexBuffer() const;
 		IBufferPtr GetIndexBuffer() const;
 
 		const CGrannyModel::TMeshNode*  GetMeshNodeList(CGrannyMesh::EType eMeshType, CGrannyMaterial::EType eMtrlType) const;
-
-		bool LockVertices(void** indicies, void** vertices) const;
-		void UnlockVertices() const;
 
 		const CGrannyMaterialPalette& GetMaterialPalette() const;
 
 	protected:
 		bool LoadMeshs();		
-		bool LoadPNTVertices();
+		bool LoadVertices();
 		bool LoadIndices();
 		void Initialize();
 
@@ -60,12 +56,12 @@ class CGrannyModel : public CReferenceObject
 	protected:
 		// Granny Data
 		granny_model *			m_pgrnModel;
-
+		bool					m_hasPNT2;
 		// Static Data
 		CGrannyMesh *			m_meshs;
 
-		CGraphicVertexBuffer	m_pntVtxBuf;	// for rigid mesh
-		IBufferPtr		m_idxBuf;
+		VBufferPtr				m_pntVtxBuf;	// for rigid mesh
+		IBufferPtr				m_idxBuf;
 
 		TMeshNode *				m_meshNodes;
 		TMeshNode *				m_meshNodeLists[CGrannyMesh::TYPE_MAX_NUM][CGrannyMaterial::TYPE_MAX_NUM];
@@ -86,13 +82,6 @@ class CGrannyModel : public CReferenceObject
 	public:
 		bool					HaveBlendThing() { return m_bHaveBlendThing; }
 	
-	//////////////////////////////////////////////////////////////////////////
-	// New members to support PNT2 type models
 	protected:
-		bool __LoadVertices();
-	protected:
-		DWORD m_dwFvF;
-	// New members to support PNT2 type models
-	//////////////////////////////////////////////////////////////////////////
-
+		UINT m_stride;
 };

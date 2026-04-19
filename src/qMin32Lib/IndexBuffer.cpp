@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "IndexBuffer.h"
+#include "EterLib/Statemanager.h"
 
 static UINT GetFormatSize(DXGI_FORMAT format)
 {
@@ -53,7 +54,7 @@ void IndexBuffer::SetIndexBuffer()
     if (!m_buffer || !m_context)
         return;
 
-    m_context->IASetIndexBuffer(m_buffer.Get(), m_format, 0);
+	STATEMANAGER.SetIndices(m_buffer.Get(), 0);
 }
 
 bool IndexBuffer::Update(const void* data, UINT dataSize)

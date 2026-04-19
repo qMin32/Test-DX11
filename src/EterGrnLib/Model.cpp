@@ -78,49 +78,53 @@ IBufferPtr CGrannyModel::GetIndexBuffer() const
 	return m_idxBuf;
 }
 
-ID3D11Buffer* CGrannyModel::GetPNTD3DVertexBuffer() const
+VBufferPtr CGrannyModel::GetVertexBuffer() const
 {
-	return m_pntVtxBuf.GetD3DVertexBuffer();
+	return m_pntVtxBuf;
 }
 
-bool CGrannyModel::LockVertices(void** indicies, void** vertices) const
-{
-	if (!m_pntVtxBuf.Lock(vertices))
-	{
-		return false;
-	}
-
-	return true;
-}
-
-void CGrannyModel::UnlockVertices() const
-{
-	m_pntVtxBuf.Unlock();
-}
-
-bool CGrannyModel::LoadPNTVertices()
+bool CGrannyModel::LoadVertices()
 {
 	if (m_rigidVtxCount <= 0)
 		return true;
 
 	assert(m_meshs != NULL);
 
-	if (!m_pntVtxBuf.Create(m_rigidVtxCount, m_dwFvF, D3DUSAGE_WRITEONLY, D3DPOOL_DEFAULT))
-		return false;
+	bool hasPNT2 = false;
 
-	void* vertices;
-	if (!m_pntVtxBuf.Lock(&vertices))
-		return false;
-
-	for (int m = 0; m < m_pgrnModel->MeshBindingCount; ++m)
+	for (int i = 0; i < m_pgrnModel->MeshBindingCount; ++i)
 	{
-		CGrannyMesh& rMesh = m_meshs[m];
-		rMesh.LoadPNTVertices(vertices);
+		if (m_meshs[i].IsPNT2())
+		{
+			hasPNT2 = true;
+			break;
+		}
 	}
 
-	m_pntVtxBuf.Unlock();
+	if (hasPNT2)
+	{
+		m_stride = sizeof(TPNT2Vertex);
+		std::vector<TPNT2Vertex> vertices(m_rigidVtxCount);
+
+		for (int i = 0; i < m_pgrnModel->MeshBindingCount; ++i)
+			m_meshs[i].LoadVertices(vertices.data());
+
+		_mgr->CreateVertexBuffer(m_pntVtxBuf, vertices.data(), m_rigidVtxCount, m_stride);
+	}
+	else
+	{
+		m_stride = sizeof(TPNTVertex);
+		std::vector<TPNTVertex> vertices(m_rigidVtxCount);
+
+		for (int i = 0; i < m_pgrnModel->MeshBindingCount; ++i)
+			m_meshs[i].LoadVertices(vertices.data());
+
+		_mgr->CreateVertexBuffer(m_pntVtxBuf, vertices.data(), m_rigidVtxCount, m_stride);
+	}
+
 	return true;
 }
+
 
 bool CGrannyModel::LoadIndices()
 {
@@ -144,10 +148,10 @@ bool CGrannyModel::LoadMeshs()
 	assert(m_meshs == NULL);
 	assert(m_pgrnModel != NULL);
 
-	if (m_pgrnModel->MeshBindingCount <= 0)	// 메쉬가 없는 모델
+	if (m_pgrnModel->MeshBindingCount <= 0)
 		return true;
 
-	granny_skeleton * pgrnSkeleton = m_pgrnModel->Skeleton;
+	granny_skeleton* pgrnSkeleton = m_pgrnModel->Skeleton;
 
 	int vtxRigidPos = 0;
 	int vtxDeformPos = 0;
@@ -160,8 +164,7 @@ bool CGrannyModel::LoadMeshs()
 
 	int meshCount = GetMeshCount();
 	m_meshs = new CGrannyMesh[meshCount];
-
-	m_dwFvF = 0;
+	m_stride = 0;
 
 	for (int m = 0; m < meshCount; ++m)
 	{
@@ -173,7 +176,7 @@ bool CGrannyModel::LoadMeshs()
 			if (!rMesh.CreateFromGrannyMeshPointer(pgrnSkeleton, pgrnMesh, vtxRigidPos, idxPos, m_kMtrlPal))
 				return false;
 
-			vtxRigidPos += GrannyGetMeshVertexCount(pgrnMesh);	
+			vtxRigidPos += GrannyGetMeshVertexCount(pgrnMesh);
 		}
 		else
 		{
@@ -185,20 +188,28 @@ bool CGrannyModel::LoadMeshs()
 		}
 		m_bHaveBlendThing |= rMesh.HaveBlendThing();
 
-		for (int i = 0; pgrnMesh->PrimaryVertexData->VertexType[i].Name != nullptr; ++i)
+		const granny_data_type_definition* type = pgrnMesh->PrimaryVertexData->VertexType;
+		if (!type)
+			continue;
+
+		for (int i = 0; type[i].Type != GrannyEndMember; ++i)
 		{
-			if ( 0 == strcmp(pgrnMesh->PrimaryVertexData->VertexType[i].Name, GrannyVertexPositionName) )
-				m_dwFvF |= D3DFVF_XYZ;
-			else if ( 0 == strcmp(pgrnMesh->PrimaryVertexData->VertexType[i].Name, GrannyVertexNormalName) )
-				m_dwFvF |= D3DFVF_NORMAL;
-			else if ( 0 == strcmp(pgrnMesh->PrimaryVertexData->VertexType[i].Name, GrannyVertexTextureCoordinatesName"0") )
-				m_dwFvF |= D3DFVF_TEX1;
-			else if ( 0 == strcmp(pgrnMesh->PrimaryVertexData->VertexType[i].Name, GrannyVertexTextureCoordinatesName"1") )
-				m_dwFvF |= D3DFVF_TEX2;
+			const char* name = type[i].Name;
+			if (!name || !name[0])
+				continue;
+
+			if (strcmp(name, GrannyVertexPositionName) == 0)
+				m_stride += sizeof(float) * 3;
+			else if (strcmp(name, GrannyVertexNormalName) == 0)
+				m_stride += sizeof(float) * 3;
+			else if (strcmp(name, GrannyVertexTextureCoordinatesName "0") == 0)
+				m_stride += sizeof(float) * 2;
+			else if (strcmp(name, GrannyVertexTextureCoordinatesName "1") == 0)
+				m_stride += sizeof(float) * 2;
 		}
 
 		vtxPos += GrannyGetMeshVertexCount(pgrnMesh);
-		idxPos += GrannyGetMeshIndexCount(pgrnMesh);		
+		idxPos += GrannyGetMeshIndexCount(pgrnMesh);
 
 		if (rMesh.GetTriGroupNodeList(CGrannyMaterial::TYPE_DIFFUSE_PNT))
 			++diffusePNTMeshNodeCount;
@@ -224,8 +235,7 @@ bool CGrannyModel::LoadMeshs()
 			AppendMeshNode(eMeshType, CGrannyMaterial::TYPE_BLEND_PNT, n);
 	}
 
-	// For Dungeon Block
-	if ((D3DFVF_XYZ|D3DFVF_NORMAL|D3DFVF_TEX1|D3DFVF_TEX2) == m_dwFvF)
+	if (sizeof(TPNT2Vertex) == m_stride)
 	{
 		for (int n = 0; n < meshCount; ++n)
 		{
@@ -236,7 +246,6 @@ bool CGrannyModel::LoadMeshs()
 
 	m_rigidVtxCount = vtxRigidPos;
 	m_deformVtxCount = vtxDeformPos;
-
 	m_vtxCount = vtxPos;
 	m_idxCount = idxPos;
 	return true;
@@ -273,7 +282,7 @@ bool CGrannyModel::CreateFromGrannyModelPointer(granny_model* pgrnModel)
 	if (!LoadMeshs())
 		return false;
 
-	if (!__LoadVertices())
+	if (!LoadVertices())
 		return false;
 
 	if (!LoadIndices())
@@ -291,10 +300,6 @@ int CGrannyModel::GetIdxCount()
 
 bool CGrannyModel::CreateDeviceObjects()
 {
-	if (m_rigidVtxCount > 0)
-		if (!m_pntVtxBuf.CreateDeviceObjects())
-			return false;
-
 	int meshCount = GetMeshCount();
 
 	for (int i = 0; i < meshCount; ++i)
@@ -308,7 +313,6 @@ bool CGrannyModel::CreateDeviceObjects()
 
 void CGrannyModel::DestroyDeviceObjects()
 {
-	m_pntVtxBuf.DestroyDeviceObjects();
 }
 
 bool CGrannyModel::IsEmpty() const
@@ -329,36 +333,7 @@ void CGrannyModel::Destroy()
 	if (m_meshs)
 		delete [] m_meshs;
 
-	m_pntVtxBuf.Destroy();
-
 	Initialize();
-}
-
-bool CGrannyModel::__LoadVertices()
-{
-	if (m_rigidVtxCount <= 0)
-		return true;
-	
-	assert(m_meshs != NULL);
-
-//	assert((m_dwFvF & (D3DFVF_XYZ|D3DFVF_NORMAL|D3DFVF_TEX1)) == m_dwFvF);
-
-//	if (!m_pntVtxBuf.Create(m_rigidVtxCount, D3DFVF_XYZ|D3DFVF_NORMAL|D3DFVF_TEX1, D3DUSAGE_WRITEONLY, D3DPOOL_MANAGED))
-	if (!m_pntVtxBuf.Create(m_rigidVtxCount, m_dwFvF, D3DUSAGE_WRITEONLY, D3DPOOL_DEFAULT))
-		return false;
-	
-	void* vertices;
-	if (!m_pntVtxBuf.Lock(&vertices))
-		return false;
-	
-	for (int m = 0; m < m_pgrnModel->MeshBindingCount; ++m)
-	{
-		CGrannyMesh& rMesh = m_meshs[m];
-		rMesh.NEW_LoadVertices(vertices);
-	}
-	
-	m_pntVtxBuf.Unlock();
-	return true;
 }
 
 void CGrannyModel::Initialize()
@@ -379,7 +354,7 @@ void CGrannyModel::Initialize()
 
 	m_canDeformPNVertices = false;
 
-	m_dwFvF = 0;
+	m_stride = 0;
 	m_bHaveBlendThing = false;
 }
 

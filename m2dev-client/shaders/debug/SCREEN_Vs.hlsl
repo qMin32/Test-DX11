@@ -1,10 +1,4 @@
-cbuffer cbScreenSize : register(b5)
-{
-	float screenWidth;
-	float screenHeight;
-	float screenPad0;
-	float screenPad1;
-};
+#include "common.hlsli"
 
 struct VS_INPUT
 {

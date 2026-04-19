@@ -1,14 +1,4 @@
-cbuffer cbPerFrame : register(b0)
-{
-    row_major float4x4 matWorld;
-    row_major float4x4 matView;
-    row_major float4x4 matProj;
-};
-
-cbuffer cbTexTransform : register(b3)
-{
-    row_major float4x4 matTexTransform;
-};
+#include "common.hlsli"
 
 struct VS_INPUT
 {
@@ -33,7 +23,7 @@ VS_OUTPUT main(VS_INPUT input)
     output.color     = input.color;
     output.viewDepth = viewPos.z;
 
-    float4 texCoord  = mul(viewPos, matTexTransform);
+    float4 texCoord  = mul(viewPos, matTexTransform0);
     output.tex       = texCoord.xy;
 
     return output;

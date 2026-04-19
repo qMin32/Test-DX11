@@ -103,8 +103,8 @@ void CSpeedTreeWrapper::OnRenderPCBlocker()
  	STATEMANAGER.SetRenderState(RS11_FOGENABLE, FALSE);
 	
 	// choose fixed function pipeline or custom shader for fronds and branches
-	STATEMANAGER.SetVertexDeclaration(ms_dwBranchVertexShader);
-	
+	_mgr->SetShader(VF_PDT2);
+
 // 	SetupBranchForTreeType();
 	{
 		// update the branch geometry for CPU wind
@@ -185,7 +185,7 @@ void CSpeedTreeWrapper::OnRenderPCBlocker()
 	// Only require the declaration.
 	if (ms_pLeafVertexShaderDecl)
 	{
-		STATEMANAGER.SetVertexDeclaration(ms_pLeafVertexShaderDecl);
+		_mgr->SetShader(VF_PDT2);
 		// No SaveVertexShader in D3D11 — vertex shader is selected by vertex format
 
 // 	SetupLeafForTreeType();
@@ -257,7 +257,7 @@ void CSpeedTreeWrapper::OnRender()
     STATEMANAGER.SaveRenderState(RS11_FOGENABLE, FALSE);
 
     // branches + fronds use the branch declaration
-    STATEMANAGER.SetVertexDeclaration(ms_dwBranchVertexShader);
+	_mgr->SetShader(VF_PDT2);
 
     // branches
     SetupBranchForTreeType();
@@ -1307,7 +1307,7 @@ void CSpeedTreeWrapper::RenderBillboards(void) const
 			{ pCoords[9], pCoords[10], pCoords[11], pTexCoords[6], pTexCoords[7] },
 		};
 		
-		_mgr->SetShader(VF_PT);
+		STATEMANAGER.SetFVF(D3DFVF_XYZ | D3DFVF_TEX1);
 		STATEMANAGER.SetRenderState(RS11_ALPHAREF, DWORD(m_pGeometryCache->m_sBillboard0.m_fAlphaTestValue));
 		
 		ms_faceCount += 2;

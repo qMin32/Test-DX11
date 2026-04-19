@@ -1,21 +1,4 @@
-cbuffer cbPerFrame : register(b0)
-{
-	row_major float4x4 matWorld;
-	row_major float4x4 matView;
-	row_major float4x4 matProj;
-};
-cbuffer cbLighting : register(b2)
-{
-	float4 lightDir; float4 lightDiffuse; float4 lightAmbient;
-	float4 matDiffuse; float4 matAmbient; float4 matEmissive;
-	int lightingEnable; int pad0; int pad1; int pad2;
-};
-
-cbuffer cbTexTransform : register(b3)
-{
-	row_major float4x4 matTexTransform0;
-	row_major float4x4 matTexTransform1;
-};
+#include "common.hlsli"
 
 struct VS_INPUT
 {

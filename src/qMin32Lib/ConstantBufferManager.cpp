@@ -1,0 +1,211 @@
+#include "pch.h"
+#include "DxManager.h"
+#include "ConstantBuffer.h"
+#include "ConstantBufferManager.h"
+
+CBManager::CBManager(DxManager* manager)
+{
+	manager->CreateConstantBuffer(m_pCBPerFrame, sizeof(CBPerFrame));
+	manager->CreateConstantBuffer(m_pCBMaterial, sizeof(CBMaterial));
+	manager->CreateConstantBuffer(m_pCBLighting, sizeof(CBLighting));
+	manager->CreateConstantBuffer(m_pCBTexTransform, sizeof(CBTexTransform));
+	manager->CreateConstantBuffer(m_pCBFog, sizeof(CBFog));
+	manager->CreateConstantBuffer(m_pCBScreenSize, sizeof(CBScreenSize));
+}
+
+void CBManager::SetWorldMatrix(const D3DXMATRIX& mat)
+{
+	m_cbPerFrame.matWorld = mat;
+	m_bTransformDirty = true;
+}
+
+void CBManager::SetViewMatrix(const D3DXMATRIX& mat)
+{
+	m_cbPerFrame.matView = mat;
+	m_bTransformDirty = true;
+}
+
+void CBManager::SetProjMatrix(const D3DXMATRIX& mat)
+{
+	m_cbPerFrame.matProj = mat;
+	m_bTransformDirty = true;
+}
+
+void CBManager::FlushTransforms()
+{
+	if (!m_bTransformDirty)
+		return;
+
+	m_pCBPerFrame->Update(m_cbPerFrame);
+
+	m_bTransformDirty = false;
+}
+
+void CBManager::SetTexTransform(DWORD dwStage, const D3DXMATRIX& mat)
+{
+	if (dwStage == 0)
+		m_cbTexTransform.matTexTransform0 = mat;
+	else if (dwStage == 1)
+		m_cbTexTransform.matTexTransform1 = mat;
+	else
+		return;
+
+	m_pCBTexTransform->Update(m_cbTexTransform);
+}
+
+
+
+void CBManager::SetLightingEnable(BOOL bEnable)
+{
+	m_cbLighting.lightingEnable = bEnable ? 1 : 0;
+	m_bLightingDirty = true;
+}
+
+void CBManager::SetLight(DWORD index, const D3DLIGHT9* pLight)
+{
+	if (index > 0 || !pLight) return; // Only support light 0 for now
+
+	m_cbLighting.lightDir[0] = pLight->Direction.x;
+	m_cbLighting.lightDir[1] = pLight->Direction.y;
+	m_cbLighting.lightDir[2] = pLight->Direction.z;
+	m_cbLighting.lightDir[3] = 0.0f;
+
+	m_cbLighting.lightDiffuse[0] = pLight->Diffuse.r;
+	m_cbLighting.lightDiffuse[1] = pLight->Diffuse.g;
+	m_cbLighting.lightDiffuse[2] = pLight->Diffuse.b;
+	m_cbLighting.lightDiffuse[3] = pLight->Diffuse.a;
+
+	m_bLightingDirty = true;
+}
+
+void CBManager::SetMaterial(const D3DMATERIAL9* pMaterial)
+{
+	m_cbLighting.matDiffuse[0] = pMaterial->Diffuse.r;
+	m_cbLighting.matDiffuse[1] = pMaterial->Diffuse.g;
+	m_cbLighting.matDiffuse[2] = pMaterial->Diffuse.b;
+	m_cbLighting.matDiffuse[3] = pMaterial->Diffuse.a;
+
+	m_cbLighting.matAmbient[0] = pMaterial->Ambient.r;
+	m_cbLighting.matAmbient[1] = pMaterial->Ambient.g;
+	m_cbLighting.matAmbient[2] = pMaterial->Ambient.b;
+	m_cbLighting.matAmbient[3] = pMaterial->Ambient.a;
+
+	m_cbLighting.matEmissive[0] = pMaterial->Emissive.r;
+	m_cbLighting.matEmissive[1] = pMaterial->Emissive.g;
+	m_cbLighting.matEmissive[2] = pMaterial->Emissive.b;
+	m_cbLighting.matEmissive[3] = pMaterial->Emissive.a;
+
+	m_bLightingDirty = true;
+}
+
+void CBManager::SetAmbient(DWORD dwColor)
+{
+	m_cbLighting.lightAmbient[0] = ((dwColor >> 16) & 0xFF) / 255.0f;
+	m_cbLighting.lightAmbient[1] = ((dwColor >> 8) & 0xFF) / 255.0f;
+	m_cbLighting.lightAmbient[2] = (dwColor & 0xFF) / 255.0f;
+	m_cbLighting.lightAmbient[3] = ((dwColor >> 24) & 0xFF) / 255.0f;
+	m_bLightingDirty = true;
+}
+
+void CBManager::FlushLighting()
+{
+	if (!m_bLightingDirty) return;
+
+	m_pCBLighting->Update(m_cbLighting);
+
+	m_bLightingDirty = false;
+}
+
+void CBManager::SetFogEnable(BOOL bEnable) 
+{
+	m_cbFog.fogEnable = bEnable ? 1 : 0;
+	m_bFogDirty = true; 
+}
+void CBManager::SetFogColor(DWORD dwColor)
+{
+	m_cbFog.fogColor[0] = ((dwColor >> 16) & 0xFF) / 255.0f;	// R
+	m_cbFog.fogColor[1] = ((dwColor >> 8) & 0xFF) / 255.0f;	// G
+	m_cbFog.fogColor[2] = (dwColor & 0xFF) / 255.0f;	// B
+	m_cbFog.fogColor[3] = 1.0f;
+	m_bFogDirty = true;
+}
+void CBManager::SetFogStart(float fStart)
+{ 
+	m_cbFog.fogStart = fStart;
+	m_bFogDirty = true;
+}
+void CBManager::SetFogEnd(float fEnd) 
+{ 
+	m_cbFog.fogEnd = fEnd;
+	m_bFogDirty = true; 
+}
+
+void CBManager::FlushFog()
+{
+	if (!m_bFogDirty) return;
+	m_pCBFog->Update(m_cbFog);
+
+	m_bFogDirty = false;
+}
+
+void CBManager::SetTextureFactor(DWORD dwFactor)
+{
+	// D3D9 DWORD color format is 0xAARRGGBB
+	m_cbMaterial.textureFactor[0] = ((dwFactor >> 16) & 0xFF) / 255.0f;	// R
+	m_cbMaterial.textureFactor[1] = ((dwFactor >> 8) & 0xFF) / 255.0f;	// G
+	m_cbMaterial.textureFactor[2] = (dwFactor & 0xFF) / 255.0f;	// B
+	m_cbMaterial.textureFactor[3] = ((dwFactor >> 24) & 0xFF) / 255.0f;	// A
+	m_bMaterialDirty = true;
+}
+
+void CBManager::SetTextureStageOp(DWORD dwStage, int colorOp, int alphaOp)
+{
+	if (dwStage == 0) { m_cbMaterial.colorOp0 = colorOp; m_cbMaterial.alphaOp0 = alphaOp; }
+	else if (dwStage == 1) { m_cbMaterial.colorOp1 = colorOp; m_cbMaterial.alphaOp1 = alphaOp; }
+	m_bMaterialDirty = true;
+}
+
+void CBManager::SetTextureStageArgs(DWORD dwStage, int colorArg1, int colorArg2, int alphaArg1, int alphaArg2)
+{
+	if (dwStage == 0)
+	{
+		m_cbMaterial.colorArg10 = colorArg1;
+		m_cbMaterial.colorArg20 = colorArg2;
+		m_cbMaterial.alphaArg10 = alphaArg1;
+		m_cbMaterial.alphaArg20 = alphaArg2;
+	}
+	else if (dwStage == 1)
+	{
+		m_cbMaterial.colorArg11 = colorArg1;
+		m_cbMaterial.colorArg21 = colorArg2;
+		m_cbMaterial.alphaArg11 = alphaArg1;
+		m_cbMaterial.alphaArg21 = alphaArg2;
+	}
+	m_bMaterialDirty = true;
+}
+
+void CBManager::SetTexCoordGen(DWORD dwStage, int mode)
+{
+	if (dwStage == 1)
+	{
+		m_cbMaterial.texCoordGen1 = mode;
+		m_bMaterialDirty = true;
+	}
+}
+
+void CBManager::FlushMaterial()
+{
+	if (!m_bMaterialDirty) return;
+
+	m_pCBMaterial->Update(m_cbMaterial);
+
+	m_bMaterialDirty = false;
+}
+
+void CBManager::SetScreenSize(float width, float height)
+{
+	m_cbScreenSize.screenWidth = width;
+	m_cbScreenSize.screenHeight = height;
+
+	m_pCBScreenSize->Update(m_cbScreenSize);
+}

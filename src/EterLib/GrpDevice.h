@@ -58,8 +58,6 @@ protected:
 	bool __CreateDefaultIndexBufferList();
 	bool __CreateDefaultIndexBuffer(UINT eDefIB, UINT uIdxCount, const WORD* c_awIndices);
 
-	void __InitializePDTVertexBufferList();
-	void __DestroyPDTVertexBufferList();
 	bool __CreatePDTVertexBufferList();
 
 	LPDIRECT3DVERTEXDECLARATION9 CreatePTStreamVertexShader();

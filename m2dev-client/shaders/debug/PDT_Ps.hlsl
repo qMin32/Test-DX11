@@ -1,25 +1,4 @@
-cbuffer cbMaterial : register(b1)
-{
-	float4 textureFactor;
-	int useTexture0; int useTexture1;
-	int colorOp0;    int alphaOp0;
-	int colorOp1;    int alphaOp1;
-	int colorArg10;  int colorArg20;
-	int alphaArg10;  int alphaArg20;
-	int colorArg11;  int colorArg21;
-	int alphaArg11;  int alphaArg21;
-	int alphaTestEnable; int alphaRef;
-	int texCoordGen1; int padMat1;
-	int padMat2; int padMat3;
-};
-cbuffer cbFog : register(b4)
-{
-	float4 fogColor;
-	float fogStart;
-	float fogEnd;
-	int fogEnable;
-	int fogPad;
-};
+#include "common.hlsli"
 
 Texture2D txDiffuse0 : register(t0);
 SamplerState sampler0 : register(s0);
@@ -32,15 +11,6 @@ struct PS_INPUT
 	float viewDepth : TEXCOORD1;
 };
 
-// Resolve a texture stage arg to a color value
-// D3DTA values: 0=DIFFUSE, 1=CURRENT, 2=TEXTURE, 3=TFACTOR
-float4 ResolveArg(int arg, float4 tex, float4 diffuse)
-{
-	if (arg == 3) return textureFactor;
-	if (arg == 2) return tex;
-	return diffuse;  // DIFFUSE(0) or CURRENT(1)
-}
-
 float4 main(PS_INPUT input) : SV_Target
 {
 	float4 texColor = float4(1, 1, 1, 1);
@@ -48,8 +18,8 @@ float4 main(PS_INPUT input) : SV_Target
 		texColor = txDiffuse0.Sample(sampler0, input.tex);
 
 	// Resolve stage 0 color args
-	float4 cArg1 = ResolveArg(colorArg10, texColor, input.color);
-	float4 cArg2 = ResolveArg(colorArg20, texColor, input.color);
+    float4 cArg1 = ResolveArg(colorArg10, texColor, input.color);
+    float4 cArg2 = ResolveArg(colorArg20, texColor, input.color);
 
 	float4 result;
 	if (colorOp0 == 0) result.rgb = cArg1.rgb * cArg2.rgb;			// MODULATE

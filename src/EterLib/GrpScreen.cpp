@@ -22,7 +22,7 @@ void CScreen::RenderLine3d(float sx, float sy, float sz, float ex, float ey, flo
 
 	assert(ms_lpd3d11Device != NULL);
 
-	SPDTVertexRaw vertices[2] =
+	TPDTVertex vertices[2] =
 	{
 		{ sx, sy, sz, ms_diffuseColor, 0.0f, 0.0f },
 		{ ex, ey, ez, ms_diffuseColor, 0.0f, 0.0f }
@@ -45,7 +45,7 @@ void CScreen::RenderBox3d(float sx, float sy, float sz, float ex, float ey, floa
 
 	assert(ms_lpd3d11Device != NULL);
 
-	SPDTVertexRaw vertices[8] =
+	TPDTVertex vertices[8] =
 	{
 		{ sx, sy, sz, ms_diffuseColor, 0.0f, 0.0f },	// 0
 		{ ex, sy, sz, ms_diffuseColor, 0.0f, 0.0f },	// 1
@@ -74,7 +74,7 @@ void CScreen::RenderBar3d(float sx, float sy, float sz, float ex, float ey, floa
 {
 	assert(ms_lpd3d11Device != NULL);
 
-	SPDTVertexRaw vertices[4] =
+	TPDTVertex vertices[4] =
 	{
 		{ sx, sy, sz, ms_diffuseColor, 0.0f, 0.0f },
 		{ sx, ey, ez, ms_diffuseColor, 0.0f, 0.0f },
@@ -97,7 +97,7 @@ void CScreen::RenderBar3d(const D3DXVECTOR3 * c_pv3Positions)
 {
 	assert(ms_lpd3d11Device != NULL);
 	
-	SPDTVertexRaw vertices[4] =
+	TPDTVertex vertices[4] =
 	{
 		{ c_pv3Positions[0].x, c_pv3Positions[0].y, c_pv3Positions[0].z, ms_diffuseColor, 0.0f, 0.0f },
 		{ c_pv3Positions[2].x, c_pv3Positions[2].y, c_pv3Positions[2].z, ms_diffuseColor, 0.0f, 0.0f },
@@ -121,7 +121,7 @@ void CScreen::RenderGradationBar3d(float sx, float sy, float sz, float ex, float
 	if (sx==ex) return;
 	if (sy==ey) return;
 
-	SPDTVertexRaw vertices[4] =
+	TPDTVertex vertices[4] =
 	{
 		{ sx, sy, sz, dwStartColor, 0.0f, 0.0f },
 		{ sx, ey, ez, dwEndColor, 0.0f, 0.0f },
@@ -140,7 +140,7 @@ void CScreen::RenderGradationBar3d(float sx, float sy, float sz, float ex, float
 
 void CScreen::RenderLineCube(float sx, float sy, float sz, float ex, float ey, float ez)
 {
-	SPDTVertexRaw vertices[8] =
+	TPDTVertex vertices[8] =
 	{
 		{ sx, sy, sz, ms_diffuseColor, 0.0f, 0.0f },
 		{ ex, sy, sz, ms_diffuseColor, 0.0f, 0.0f },
@@ -167,7 +167,7 @@ void CScreen::RenderLineCube(float sx, float sy, float sz, float ex, float ey, f
 
 void CScreen::RenderCube(float sx, float sy, float sz, float ex, float ey, float ez)
 {
-	SPDTVertexRaw vertices[8] =
+	TPDTVertex vertices[8] =
 	{
 		{ sx, sy, sz, ms_diffuseColor, 0.0f, 0.0f  },
 		{ ex, sy, sz, ms_diffuseColor, 0.0f, 0.0f  },
@@ -206,18 +206,16 @@ void CScreen::RenderCube(float sx, float sy, float sz, float ex, float ey, float
 		D3DXVECTOR3(sx, ey, ez),
 		D3DXVECTOR3(ex, ey, ez),
 	};
-	SPDTVertexRaw vertices[8];
+	TPDTVertex vertices[8];
 
 	for(int i = 0; i < 8; i++)
 	{
 		v3Vertex[i] = v3Vertex[i] - v3Center;
 		D3DXVec3TransformCoord(&v3Vertex[i], &v3Vertex[i], &matRotation);
 		v3Vertex[i] = v3Vertex[i] + v3Center;
-		vertices[i].px = v3Vertex[i].x;
-		vertices[i].py = v3Vertex[i].y;
-		vertices[i].pz = v3Vertex[i].z;
+		vertices[i].position = v3Vertex[i];
 		vertices[i].diffuse = ms_diffuseColor;
-		vertices[i].u = 0.0f; vertices[i].v = 0.0f;
+		vertices[i].texCoord = { 0.0f, 0.0f };
 	}
 
 	if (SetPDTStream(vertices, 8))

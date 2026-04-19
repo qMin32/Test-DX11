@@ -94,7 +94,7 @@ ID3D11DepthStencilView*	CGraphicBase::ms_lpd3d11DSV = NULL;
 ID3D11Texture2D*		CGraphicBase::ms_lpd3d11DepthStencil = NULL;
 UniquePtr<DxManager>	CGraphicBase::m_mgr = nullptr;
 
-ID3D11Buffer*	CGraphicBase::ms_alpd3dPDTVB[PDT_VERTEXBUFFER_NUM];
+VBufferPtr	CGraphicBase::ms_alpd3dPDTVB[PDT_VERTEXBUFFER_NUM];
 
 IBufferPtr	CGraphicBase::ms_alpd3dDefIB[DEFAULT_IB_NUM];
 
@@ -134,14 +134,9 @@ void CGraphicBase::SetDefaultIndexBuffer(UINT eDefIB)
 	m_mgr->SetIndexBuffer(ms_alpd3dDefIB[eDefIB]);
 }
 
-bool CGraphicBase::SetPDTStream(SPDTVertex* pVertices, UINT uVtxCount)
+bool CGraphicBase::SetPDTStream(SPDTVertex* pSrcVertices, UINT uVtxCount)
 {
-	return SetPDTStream((SPDTVertexRaw*)pVertices, uVtxCount);
-}
-
-bool CGraphicBase::SetPDTStream(SPDTVertexRaw* pSrcVertices, UINT uVtxCount)
-{
-	if (!uVtxCount || !ms_lpd3d11Context)
+	if (!uVtxCount || uVtxCount >= PDT_VERTEX_NUM)
 		return false;
 
 	static DWORD s_dwVBPos = 0;
@@ -149,33 +144,17 @@ bool CGraphicBase::SetPDTStream(SPDTVertexRaw* pSrcVertices, UINT uVtxCount)
 	if (s_dwVBPos >= PDT_VERTEXBUFFER_NUM)
 		s_dwVBPos = 0;
 
-	ID3D11Buffer* pVB = ms_alpd3dPDTVB[s_dwVBPos];
+	auto vb = ms_alpd3dPDTVB[s_dwVBPos];
+
 	++s_dwVBPos;
 
-	assert(PDT_VERTEX_NUM >= uVtxCount);
-	if (uVtxCount >= PDT_VERTEX_NUM)
+	if (!vb)
 		return false;
 
-	if (!pVB)
-	{
-		STATEMANAGER.SetStreamSource(0, NULL, 0);
+	if (!vb->Update(pSrcVertices))
 		return false;
-	}
 
-	// Map dynamic vertex buffer
-	D3D11_MAPPED_SUBRESOURCE mapped;
-	if (FAILED(ms_lpd3d11Context->Map(pVB, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)))
-	{
-		STATEMANAGER.SetStreamSource(0, NULL, 0);
-		return false;
-	}
-
-	memcpy(mapped.pData, pSrcVertices, sizeof(TPDTVertex) * uVtxCount);
-	ms_lpd3d11Context->Unmap(pVB, 0);
-
-	_mgr->SetShader(VF_PDT);
-
-	STATEMANAGER.SetStreamSource(0, pVB, sizeof(TPDTVertex));
+	m_mgr->SetVertexBuffer(vb, sizeof(TPDTVertex));
 	return true;
 }
 

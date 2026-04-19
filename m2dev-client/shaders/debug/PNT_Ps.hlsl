@@ -1,25 +1,5 @@
-cbuffer cbMaterial : register(b1)
-{
-	float4 textureFactor;
-	int useTexture0; int useTexture1;
-	int colorOp0;    int alphaOp0;
-	int colorOp1;    int alphaOp1;
-	int colorArg10;  int colorArg20;
-	int alphaArg10;  int alphaArg20;
-	int colorArg11;  int colorArg21;
-	int alphaArg11;  int alphaArg21;
-	int alphaTestEnable; int alphaRef;
-	int texCoordGen1; int padMat1; int padMat2; int padMat3;
-};
+#include "common.hlsli"
 
-cbuffer cbFog : register(b4)
-{ 
-	float4 fogColor;
-	float fogStart;
-	float fogEnd;
-	int fogEnable;
-	int fogPad;
-};
 
 Texture2D txDiffuse0 : register(t0);
 Texture2D txDiffuse1 : register(t1);
@@ -34,14 +14,6 @@ struct PS_INPUT
 	float viewDepth : TEXCOORD1;
 	float2 tex1 : TEXCOORD2;
 };
-
-// D3DTA values: 0=DIFFUSE, 1=CURRENT, 2=TEXTURE, 3=TFACTOR
-float4 ResolveArg(int arg, float4 tex, float4 diffuse)
-{
-	if (arg == 3) return textureFactor;
-	if (arg == 2) return tex;
-	return diffuse;
-}
 
 float4 main(PS_INPUT input) : SV_Target
 {
@@ -66,13 +38,7 @@ float4 main(PS_INPUT input) : SV_Target
 	else if (alphaOp0 == 1) stage0.a = aArg1;
 	else if (alphaOp0 == 3) stage0.a = aArg2;
 	else stage0.a = texColor.a;
-
-	// Stage 1 — only active for specular sphere-map (texCoordGen1 == 2).
-	// texCoordGen1==2 means camera-space reflection vector, used exclusively for
-	// armor specular. Other modes (0=vertex UV, 1=camera-space position) are NOT
-	// handled here because PNT vertices have no real tex1 data and other render
-	// passes (PCBlocker, environment maps) set stage 1 in ways incompatible with
-	// PNT's single-texcoord layout.
+	
 	float4 result = stage0;
 	if (texCoordGen1 == 2 && useTexture1 && colorOp1 != -1)
 	{

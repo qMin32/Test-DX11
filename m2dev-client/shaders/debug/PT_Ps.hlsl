@@ -1,33 +1,17 @@
-cbuffer cbMaterial : register(b1)
-{
-	float4 textureFactor;
-	int useTexture0; int useTexture1;
-	int colorOp0;    int alphaOp0;
-	int colorOp1;    int alphaOp1;
-	int colorArg10;  int colorArg20;
-	int alphaArg10;  int alphaArg20;
-	int colorArg11;  int colorArg21;
-	int alphaArg11;  int alphaArg21;
-	int alphaTestEnable; int alphaRef;
-	int texCoordGen1; int padMat1; int padMat2; int padMat3;
-};
-cbuffer cbFog : register(b4) { float4 fogColor; float fogStart; float fogEnd; int fogEnable; int fogPad; };
+#include "common.hlsli"
 
 Texture2D txDiffuse0 : register(t0);
 Texture2D txDiffuse1 : register(t1);
 SamplerState sampler0 : register(s0);
 SamplerState sampler1 : register(s1);
 
-struct PS_INPUT { float4 pos : SV_POSITION; float2 tex0 : TEXCOORD0; float viewDepth : TEXCOORD1; float2 tex1 : TEXCOORD2; };
-
-// Helper: resolve a texture stage arg to a color value
-// arg values: 0=DIFFUSE, 1=CURRENT, 2=TEXTURE, 3=TFACTOR
-float4 ResolveArg(int arg, float4 tex, float4 current)
-{
-	if (arg == 3) return textureFactor;
-	if (arg == 2) return tex;
-	return current;
-}
+struct PS_INPUT 
+{ 
+	float4 pos : SV_POSITION;
+	float2 tex0 : TEXCOORD0;
+	float viewDepth : TEXCOORD1; 
+	float2 tex1 : TEXCOORD2; 
+};
 
 float4 main(PS_INPUT input) : SV_Target
 {

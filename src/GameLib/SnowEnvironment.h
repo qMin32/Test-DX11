@@ -43,7 +43,7 @@ class CSnowEnvironment : public CScreen
 		ID3D11Texture2D*			m_lpAccumDepthTex;
 		ID3D11DepthStencilView*		m_lpAccumDSV;
 
-		ID3D11Buffer* m_pVB;
+		VBufferPtr m_pVB;
 		IBufferPtr m_pIB;
 
 		D3DXVECTOR3 m_v3Center;

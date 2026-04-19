@@ -1,9 +1,4 @@
-cbuffer cbPerFrame : register(b0)
-{ 
-	row_major float4x4  matWorld;
-	row_major  float4x4 matView; 
-	row_major float4x4 matProj; 
-};
+#include "common.hlsli"
 
 struct VS_INPUT  
 { 

@@ -157,23 +157,20 @@ void CSnowEnvironment::Render()
 	const D3DXVECTOR3 & c_rv3Up = pCamera->GetUp();
 	const D3DXVECTOR3 & c_rv3Cross = pCamera->GetCross();
 
-	D3D11_MAPPED_SUBRESOURCE mapped;
-	if (ms_lpd3d11Context && SUCCEEDED(ms_lpd3d11Context->Map(m_pVB, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)))
+	std::vector<SParticleVertex> tempVertices(dwParticleCount * 4);
+	int i = 0;
+	auto itor = m_kVct_pkParticleSnow.begin();
+	for (; i < dwParticleCount && itor != m_kVct_pkParticleSnow.end(); ++i, ++itor)
 	{
-		SParticleVertex * pv3Verticies = (SParticleVertex *)mapped.pData;
-		int i = 0;
-		std::vector<CSnowParticle*>::iterator itor = m_kVct_pkParticleSnow.begin();
-		for (; i < dwParticleCount && itor != m_kVct_pkParticleSnow.end(); ++i, ++itor)
-		{
-			CSnowParticle * pSnow = *itor;
-			pSnow->SetCameraVertex(c_rv3Up, c_rv3Cross);
-			pSnow->GetVerticies(pv3Verticies[i*4+0],
-								pv3Verticies[i*4+1],
-								pv3Verticies[i*4+2],
-								pv3Verticies[i*4+3]);
-		}
-		ms_lpd3d11Context->Unmap(m_pVB, 0);
+		CSnowParticle* pSnow = *itor;
+		pSnow->SetCameraVertex(c_rv3Up, c_rv3Cross);
+		pSnow->GetVerticies(
+			tempVertices[i * 4 + 0],
+			tempVertices[i * 4 + 1],
+			tempVertices[i * 4 + 2],
+			tempVertices[i * 4 + 3]);
 	}
+	m_pVB->Update(tempVertices.data(), dwParticleCount * 4);
 
 	STATEMANAGER.SaveRenderState(RS11_ZWRITEENABLE, FALSE);
 	STATEMANAGER.SaveRenderState(RS11_ALPHABLENDENABLE, TRUE);
@@ -191,7 +188,7 @@ void CSnowEnvironment::Render()
 	m_pImageInstance->GetGraphicImagePointer()->GetTextureReference().SetTextureStage(0);
 	_mgr->SetIndexBuffer(m_pIB);
 	_mgr->SetShader(VF_PT);
-	STATEMANAGER.SetStreamSource(0, m_pVB, sizeof(SParticleVertex));
+	_mgr->SetVertexBuffer(m_pVB);
 	STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, dwParticleCount*4, 0, dwParticleCount*2);
 	STATEMANAGER.RestoreRenderState(RS11_ALPHABLENDENABLE);
 	STATEMANAGER.RestoreRenderState(RS11_ZWRITEENABLE);
@@ -264,14 +261,8 @@ bool CSnowEnvironment::__CreateGeometry()
 	if (!ms_lpd3d11Device)
 		return false;
 
-	// Dynamic vertex buffer (CPU writes each frame via Map/DISCARD)
-	D3D11_BUFFER_DESC vbDesc = {};
-	vbDesc.ByteWidth = sizeof(SParticleVertex) * m_dwParticleMaxNum * 4;
-	vbDesc.Usage = D3D11_USAGE_DYNAMIC;
-	vbDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	vbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-
-	if (FAILED(ms_lpd3d11Device->CreateBuffer(&vbDesc, nullptr, &m_pVB)))
+	_mgr->CreateVertexBuffer(m_pVB, nullptr, m_dwParticleMaxNum * 4, sizeof(SParticleVertex), true);
+	if (!m_pVB)
 		return false;
 
 	// Build static index data
@@ -317,7 +308,6 @@ void CSnowEnvironment::Destroy()
 	SAFE_RELEASE(m_lpAccumRTV);
 	SAFE_RELEASE(m_lpAccumTexture);
 	SAFE_RELEASE(m_lpAccumTex);
-	SAFE_RELEASE(m_pVB);
 
 	stl_wipe(m_kVct_pkParticleSnow);
 	CSnowParticle::DestroyPool();

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "GrpImage.h"
-#include "GrpVertexBufferDynamic.h"
 #include "Pool.h"
 
 class CGraphicImageInstance

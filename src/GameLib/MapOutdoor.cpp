@@ -348,8 +348,6 @@ void CMapOutdoor::CreateTerrainPatchProxyList()
 	
 	m_iPatchTerrainVertexCount = (TERRAIN_PATCHSIZE+1)*(TERRAIN_PATCHSIZE+1);
 	m_iPatchWaterVertexCount = TERRAIN_PATCHSIZE * TERRAIN_PATCHSIZE * 6;
-	m_iPatchTerrainVertexSize = 24;
-	m_iPatchWaterVertexSize = 16;
 
 	SetIndexBuffer();
 }

@@ -1,7 +1,21 @@
-cbuffer cbPerFrame : register(b0) { row_major float4x4 matWorld; row_major float4x4 matView; row_major float4x4 matProj; };
+#include "common.hlsli"
 
-struct VS_INPUT  { float3 pos : POSITION; float4 color : COLOR0; float2 tex0 : TEXCOORD0; float2 tex1 : TEXCOORD1; };
-struct VS_OUTPUT { float4 pos : SV_POSITION; float4 color : COLOR0; float2 tex0 : TEXCOORD0; float2 tex1 : TEXCOORD1; float viewDepth : TEXCOORD2; };
+struct VS_INPUT  
+{ 
+	float3 pos : POSITION; 
+	float4 color : COLOR0; 
+	float2 tex0 : TEXCOORD0; 
+	float2 tex1 : TEXCOORD1;
+};
+
+struct VS_OUTPUT 
+{ 
+	float4 pos : SV_POSITION;
+	float4 color : COLOR0; 
+	float2 tex0 : TEXCOORD0; 
+	float2 tex1 : TEXCOORD1; 
+	float viewDepth : TEXCOORD2; 
+};
 
 VS_OUTPUT main(VS_INPUT input)
 {

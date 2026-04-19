@@ -203,7 +203,7 @@ void CSpeedTreeForestDirectX::Render(unsigned long ulRenderBitVector)
 	STATEMANAGER.SaveRenderState(RS11_CULLMODE, D3D11_CULL_FRONT);
 
 	// choose fixed function pipeline or custom shader for fronds and branches
-	STATEMANAGER.SetVertexDeclaration(m_dwBranchVertexShader);
+	_mgr->SetShader(VF_PDT2);
 
 	// render branches
 	if (ulRenderBitVector & Forest_RenderBranches)
@@ -251,7 +251,7 @@ void CSpeedTreeForestDirectX::Render(unsigned long ulRenderBitVector)
 	{
 		// D3D11: ms_pLeafVertexShader is always NULL — leaf rendering goes through the
 		// standard VF_PDT pipeline. Only require the declaration to be present.
-		STATEMANAGER.SetVertexDeclaration(m_pLeafVertexShaderDecl);
+		_mgr->SetShader(VF_PDT2);
 		STATEMANAGER.SaveRenderState(RS11_ZWRITEENABLE, FALSE);
 
 		if (ulRenderBitVector & Forest_RenderToShadow || ulRenderBitVector & Forest_RenderToMiniMap)

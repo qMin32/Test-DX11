@@ -1,11 +1,5 @@
-cbuffer cbFog : register(b4)
-{
-    float4 fogColor;
-    float  fogStart;
-    float  fogEnd;
-    int    fogEnable;
-    int    fogPad;
-};
+#include "common.hlsli"
+
 
 Texture2D    txWater : register(t0);
 SamplerState sampler0 : register(s0);

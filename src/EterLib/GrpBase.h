@@ -57,13 +57,6 @@ typedef struct SPDVertex
 	DWORD color;
 } TPDVertex;
 
-struct SPDTVertexRaw
-{
-	float px, py, pz;
-	DWORD diffuse;
-	float u, v;
-};
-
 typedef struct SPTVertex
 {
 	TPosition position;
@@ -72,9 +65,12 @@ typedef struct SPTVertex
 
 typedef struct SPDTVertex
 {
-	TPosition	position;
-	TDiffuse	diffuse;
-	TTextureCoordinate texCoord;
+	D3DXVECTOR3	position;
+	DWORD		diffuse;
+	D3DXVECTOR2 texCoord;
+	SPDTVertex() : position(0.0f, 0.0f, 0.0f), diffuse(0x80339CFF), texCoord(0.0f, 0.0f) {}
+	SPDTVertex(D3DXVECTOR3 pos, DWORD col, D3DXVECTOR2 uv) : position(pos), diffuse(col), texCoord(uv) {}
+	SPDTVertex(float x, float y, float z, DWORD color, float pu, float pv) : position(x, y, z), diffuse(color), texCoord(pu, pv) {}
 } TPDTVertex;
 
 typedef struct SPNTVertex
@@ -217,7 +213,6 @@ class CGraphicBase
 		static LPDIRECT3DVERTEXDECLARATION9 GetPNT2VertexDecl() { return ms_pnt2VS; }
 
 		static void SetDefaultIndexBuffer(UINT eDefIB);
-		static bool SetPDTStream(SPDTVertexRaw* pVertices, UINT uVtxCount);
 		static bool SetPDTStream(SPDTVertex* pVertices, UINT uVtxCount);
 		
 	protected:
@@ -315,7 +310,7 @@ class CGraphicBase
 		};
 		
 		
-		static ID3D11Buffer*	ms_alpd3dPDTVB[PDT_VERTEXBUFFER_NUM];
+		static VBufferPtr		ms_alpd3dPDTVB[PDT_VERTEXBUFFER_NUM];
 		static IBufferPtr		ms_alpd3dDefIB[DEFAULT_IB_NUM];
 		static UniquePtr<DxManager> 			m_mgr;
 };

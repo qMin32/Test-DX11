@@ -13,11 +13,17 @@ using CBufferPtr = std::shared_ptr<ConstantBuffer>;
 class IndexBuffer;
 using IBufferPtr = std::shared_ptr<IndexBuffer>;
 
+class VertexBuffer;
+using VBufferPtr = std::shared_ptr<VertexBuffer>;
+
 class CShaders;
 using ShaderPtr = std::shared_ptr<CShaders>;
 
 class ShadersContainer;
 using ShadersContainerPtr = std::shared_ptr<ShadersContainer>;
+
+class CBManager;
+using CBManagerPtr = std::shared_ptr<CBManager>;
 
 class DxManager;
 template <typename T> using RefPtr = std::shared_ptr<T>;
@@ -34,5 +40,6 @@ enum ED3D11VertexFormat
 	VF_SCREEN,	// Pre-transformed: XYZRHW + Diffuse + Specular + Tex2
 	VF_PT,		// Position + TexCoord (effects, snow, minimap)
 	VF_PDT2,	// Position + Diffuse + TexCoord + TexCoord2 (SpeedTree branches/fronds)
+
 	VF_COUNT
 };

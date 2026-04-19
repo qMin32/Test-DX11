@@ -9,7 +9,6 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
-#include "EterLib/GrpVertexBuffer.h"
 #include "PRTerrainLib/Terrain.h"
 
 #pragma pack(push)
@@ -116,22 +115,22 @@ private:
 	DWORD					m_dwID;
 	DWORD m_dwWaterPriCount;
 	
-	CGraphicVertexBuffer	m_WaterVertexBuffer;
+	VBufferPtr				m_WaterVertexBuffer;
 	BYTE					m_byType;
 
 	bool					m_bNeedUpdate;
 	DWORD					m_dwVersion;
 
 public:
-	CGraphicVertexBuffer* GetWaterVertexBufferPointer()	{ return &m_WaterVertexBuffer;}
+	VBufferPtr GetWaterVertexBufferPointer()	{ return m_WaterVertexBuffer;}
 
 public:
-	CGraphicVertexBuffer* HardwareTransformPatch_GetVertexBufferPtr() {return &m_kHT.m_kVB;}
+	VBufferPtr HardwareTransformPatch_GetVertexBufferPtr() {return m_kHT.m_kVB;}
 
 protected:
 	struct SHardwareTransformPatch
 	{
-		CGraphicVertexBuffer	m_kVB;
+		VBufferPtr	m_kVB;
 	} m_kHT;
 
 
@@ -190,9 +189,9 @@ public:
 	float GetMaxZ();
 
 	// Vertex Buffer
-	CGraphicVertexBuffer * GetWaterVertexBufferPointer();
+	VBufferPtr GetWaterVertexBufferPointer();
 	SoftwareTransformPatch_SSourceVertex* SoftwareTransformPatch_GetTerrainVertexDataPtr();
-	CGraphicVertexBuffer* HardwareTransformPatch_GetVertexBufferPtr();
+	VBufferPtr HardwareTransformPatch_GetVertexBufferPtr();
 
 	void SoftwareTransformPatch_UpdateTerrainLighting(DWORD dwVersion, const D3DLIGHT9& c_rkLight, const D3DMATERIAL9& c_rkMtrl);
 	
@@ -242,7 +241,7 @@ inline float CTerrainPatchProxy::GetMaxZ()
 	return m_pTerrainPatch->GetMaxZ();
 }
 
-inline CGraphicVertexBuffer * CTerrainPatchProxy::GetWaterVertexBufferPointer()
+inline VBufferPtr CTerrainPatchProxy::GetWaterVertexBufferPointer()
 {
 	return m_pTerrainPatch->GetWaterVertexBufferPointer();
 }

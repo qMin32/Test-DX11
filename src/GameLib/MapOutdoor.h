@@ -545,9 +545,6 @@ class CMapOutdoor : public CMapBase
 		int m_iPatchTerrainVertexCount;
 		int m_iPatchWaterVertexCount;
 
-		int m_iPatchTerrainVertexSize;
-		int m_iPatchWaterVertexSize;
-
 		DWORD m_dwRenderedCRCNum;
 		DWORD m_dwRenderedGraphicThingInstanceNum;
 

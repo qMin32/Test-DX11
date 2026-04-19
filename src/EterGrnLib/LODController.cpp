@@ -1,5 +1,7 @@
 #include "StdAfx.h"
 #include "LODController.h"
+#include "qMin32Lib/DxManager.h"
+#include "qMin32Lib/VertexBuffer.h"
 
 static float LODHEIGHT_ACTOR		=	500.0f;
 static float LODDISTANCE_ACTOR		=	5000.0f;
@@ -25,43 +27,33 @@ enum
 	SHARED_VB_NUM	= 9,
 };
 
-static std::vector<CGraphicVertexBuffer*> gs_vbs[SHARED_VB_NUM];
+static std::vector<VBufferPtr> gs_vbs[SHARED_VB_NUM];
 
-static CGraphicVertexBuffer gs_emptyVB;
+static VBufferPtr gs_emptyVB;
 
 #include <time.h>
 
-static CGraphicVertexBuffer* __AllocDeformVertexBuffer(unsigned deformableVertexCount)
+static VBufferPtr __AllocDeformVertexBuffer(unsigned deformableVertexCount)
 {
 	if (deformableVertexCount == 0)
-		return &gs_emptyVB;
+		return gs_emptyVB;
 
-	unsigned capacity	= (((deformableVertexCount-1) / 500) + 1) * 500;
-	unsigned index		= (deformableVertexCount-1) / 500;	
-	if (index < SHARED_VB_NUM)
-	{	
-		std::vector<CGraphicVertexBuffer*>& vbs = gs_vbs[index];
-		if (!vbs.empty())
-		{
-			//TraceError("REUSE %d(%d)", capacity, deformableVertexCount);
-
-			CGraphicVertexBuffer* pkRetVB = vbs.back();
-			vbs.pop_back();
-			return pkRetVB;
-		}
+	unsigned capacity = (((deformableVertexCount - 1) / 500) + 1) * 500;
+	unsigned index = (deformableVertexCount - 1) / 500;
+	if (index < SHARED_VB_NUM && !gs_vbs[index].empty())
+	{
+		VBufferPtr vb = gs_vbs[index].back();
+		gs_vbs[index].pop_back();
+		return vb;
 	}
 
 
 	static time_t base = time(NULL);
 	//TraceError("NEW %8d: %d(%d)", time(NULL) - base, capacity, deformableVertexCount);
+	VBufferPtr pkNewVB = std::make_shared<VertexBuffer>();
+	 _mgr->CreateVertexBuffer(pkNewVB, nullptr, capacity, sizeof(TPNTVertex), true);
 
-	CGraphicVertexBuffer* pkNewVB = new CGraphicVertexBuffer;
-
-	if (!pkNewVB->Create(
-		capacity,
-		D3DFVF_XYZ|D3DFVF_NORMAL|D3DFVF_TEX1,
-		D3DUSAGE_DYNAMIC,
-		D3DPOOL_DEFAULT))
+	if (!pkNewVB)
 	{
 		TraceError("NEW_ERROR %8d: %d(%d)", time(NULL) - base, capacity, deformableVertexCount);
 	}
@@ -69,22 +61,18 @@ static CGraphicVertexBuffer* __AllocDeformVertexBuffer(unsigned deformableVertex
 	return pkNewVB;
 }
 
-void __FreeDeformVertexBuffer(CGraphicVertexBuffer* pkDelVB)
+
+void __FreeDeformVertexBuffer(VBufferPtr pkDelVB)
 {
 	if (pkDelVB)
 	{
-		if (pkDelVB == &gs_emptyVB)
+		if (pkDelVB == gs_emptyVB)
 			return;
 
 		unsigned index = (pkDelVB->GetVertexCount() - 1) / 500;
 		if (index < SHARED_VB_NUM)
-		{	
-			gs_vbs[index].push_back(pkDelVB);			
-		}
-		else
 		{
-			pkDelVB->Destroy();
-			delete pkDelVB;
+			gs_vbs[index].push_back(pkDelVB);
 		}
 	}
 }
@@ -92,20 +80,18 @@ void __FreeDeformVertexBuffer(CGraphicVertexBuffer* pkDelVB)
 void __ReserveSharedVertexBuffers(unsigned index, unsigned count)
 {
 	NANOBEGIN
-	if (index >= SHARED_VB_NUM)
-		return;
+		if (index >= SHARED_VB_NUM)
+			return;
 
 	unsigned capacity = (index + 1) * 500;
 
 	for (unsigned i = 0; i != count; ++i)
 	{
-		CGraphicVertexBuffer* pkNewVB = new CGraphicVertexBuffer;
-		pkNewVB->Create(
-			capacity,
-			D3DFVF_XYZ|D3DFVF_NORMAL|D3DFVF_TEX1,
-			D3DUSAGE_DYNAMIC,
-			D3DPOOL_DEFAULT);	
-		gs_vbs[index].push_back(pkNewVB);
+		VBufferPtr pkNewVB = std::make_shared<VertexBuffer>();
+		_mgr->CreateVertexBuffer(pkNewVB, nullptr, capacity, sizeof(TPNTVertex), true);
+
+		if (pkNewVB)
+			gs_vbs[index].push_back(pkNewVB);
 	}
 	NANOEND
 }
@@ -121,26 +107,10 @@ void GrannyCreateSharedDeformBuffer()
 
 void GrannyDestroySharedDeformBuffer()
 {
-#ifdef _DEBUG
-	TraceError("granny_shared_vbs:");
-#endif
-	for (int i = 0; i != SHARED_VB_NUM; ++i)
-	{	
-		std::vector<CGraphicVertexBuffer*>& vbs = gs_vbs[i];
-#ifdef _DEBUG
-		TraceError("\t%d: %d", i, vbs.size());
-#endif
-
-		std::vector<CGraphicVertexBuffer*>::iterator v;
-		for (v = vbs.begin(); v != vbs.end(); ++v)
-		{
-			CGraphicVertexBuffer* pkEachVB = (*v);
-			pkEachVB->Destroy();
-			delete pkEachVB;
-		}
-		vbs.clear();
+	for (int i = 0; i < SHARED_VB_NUM; ++i)
+	{
+		gs_vbs[i].clear();
 	}
-	
 }
 
 void CGrannyLODController::SetMinLODMode(bool isEnable)

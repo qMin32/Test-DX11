@@ -37,8 +37,8 @@ class CGrannyMesh
 		bool					IsEmpty() const;
 		bool					CreateFromGrannyMeshPointer(granny_skeleton* pgrnSkeleton, granny_mesh* pgrnMesh, int vtxBasePos, int idxBasePos, CGrannyMaterialPalette& rkMtrlPal);			
 		void					LoadIndices(void* dstBaseIndices);
- 		void					LoadPNTVertices(void* dstBaseVertices);
-		void					NEW_LoadVertices(void* dstBaseVertices);
+		void					LoadVertices(void* dstBaseVertices);
+		bool					IsPNT2() const;
 		void					Destroy();
 
 		void					SetPNT2Mesh();

@@ -10,18 +10,8 @@ public:
 
 	UINT GetVertexCount() const { return m_vertexCount; }
 
-    bool Update(const void* data, UINT dataSize);
-
-    template <class T> bool Update(const std::vector<T>& data)
-    {
-        if (data.empty())
-            return false;
-
-        if (data.size() != m_vertexCount)
-            return false;
-
-        return Update(data.data(), static_cast<UINT>(data.size() * sizeof(T)));
-    }
+    bool Update(const void* data);
+    bool Update(const void* data, UINT vertexCount);
 
 private:
     ComPtr<ID3D11Buffer> m_buffer;
