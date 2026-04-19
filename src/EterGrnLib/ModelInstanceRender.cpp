@@ -59,8 +59,7 @@ void CGrannyModelInstance::RenderWithOneTexture()
 	return;
 #endif
 
-	STATEMANAGER.SetVertexDeclaration(ms_pntVS);
-
+	_mgr->SetShader(VF_PNT);
 	// WORK
 	ID3D11Buffer* lpd3dDeformPNTVtxBuf = __GetDeformableD3DVertexBufferPtr();
 	// END_OF_WORK
@@ -89,7 +88,7 @@ void CGrannyModelInstance::BlendRenderWithOneTexture()
 	// END_OF_WORK
 	ID3D11Buffer* lpd3dRigidPNTVtxBuf = m_pModel->GetPNTD3DVertexBuffer();
 
- 	STATEMANAGER.SetVertexDeclaration(ms_pntVS);
+	_mgr->SetShader(VF_PNT);
 
 	if (lpd3dDeformPNTVtxBuf)
 	{
@@ -111,7 +110,7 @@ void CGrannyModelInstance::RenderWithTwoTexture()
 	if (IsEmpty())
 		return;
 
-	STATEMANAGER.SetVertexDeclaration(ms_pntVS);
+	_mgr->SetShader(VF_PNT2);
 
 	// WORK
 	ID3D11Buffer* lpd3dDeformPNTVtxBuf = __GetDeformableD3DVertexBufferPtr();
@@ -120,12 +119,12 @@ void CGrannyModelInstance::RenderWithTwoTexture()
 
 	if (lpd3dDeformPNTVtxBuf)
 	{
-		STATEMANAGER.SetStreamSource(0, lpd3dDeformPNTVtxBuf, sizeof(TPNTVertex));
+		STATEMANAGER.SetStreamSource(0, lpd3dDeformPNTVtxBuf, sizeof(TPNT2Vertex));
 		RenderMeshNodeListWithTwoTexture(CGrannyMesh::TYPE_DEFORM, CGrannyMaterial::TYPE_DIFFUSE_PNT);
 	}
 	if (lpd3dRigidPNTVtxBuf)
 	{
-		STATEMANAGER.SetStreamSource(0, lpd3dRigidPNTVtxBuf, sizeof(TPNTVertex));
+		STATEMANAGER.SetStreamSource(0, lpd3dRigidPNTVtxBuf, sizeof(TPNT2Vertex));
 		RenderMeshNodeListWithTwoTexture(CGrannyMesh::TYPE_RIGID, CGrannyMaterial::TYPE_DIFFUSE_PNT);
 	}
 }
@@ -140,17 +139,17 @@ void CGrannyModelInstance::BlendRenderWithTwoTexture()
 	// END_OF_WORK
 	ID3D11Buffer* lpd3dRigidPNTVtxBuf = m_pModel->GetPNTD3DVertexBuffer();
 
- 	STATEMANAGER.SetVertexDeclaration(ms_pntVS);
+	_mgr->SetShader(VF_PNT);
 
 	if (lpd3dDeformPNTVtxBuf)
 	{
-		STATEMANAGER.SetStreamSource(0, lpd3dDeformPNTVtxBuf, sizeof(TPNTVertex));
+		STATEMANAGER.SetStreamSource(0, lpd3dDeformPNTVtxBuf, sizeof(TPNT2Vertex));
 		RenderMeshNodeListWithTwoTexture(CGrannyMesh::TYPE_DEFORM, CGrannyMaterial::TYPE_BLEND_PNT);
 	}
 
 	if (lpd3dRigidPNTVtxBuf)
 	{
-		STATEMANAGER.SetStreamSource(0, lpd3dRigidPNTVtxBuf, sizeof(TPNTVertex));
+		STATEMANAGER.SetStreamSource(0, lpd3dRigidPNTVtxBuf, sizeof(TPNT2Vertex));
 		RenderMeshNodeListWithTwoTexture(CGrannyMesh::TYPE_RIGID, CGrannyMaterial::TYPE_BLEND_PNT);
 	}
 }
@@ -160,7 +159,7 @@ void CGrannyModelInstance::RenderWithoutTexture()
 	if (IsEmpty())
 		return;
 
-	STATEMANAGER.SetVertexDeclaration(ms_pntVS);
+	_mgr->SetShader(VF_PNT);
 	STATEMANAGER.SetTexture(0, NULL);
 	STATEMANAGER.SetTexture(1, NULL);
 

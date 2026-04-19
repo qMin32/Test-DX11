@@ -296,6 +296,7 @@ void CStateManager::SetDefaultState()
 
 		SetSamplerState(i, SS11_ADDRESSU, D3D11_TEXTURE_ADDRESS_WRAP);
 		SetSamplerState(i, SS11_ADDRESSV, D3D11_TEXTURE_ADDRESS_WRAP);
+		SetTextureStageState(i, TSS11_TEXTURETRANSFORMFLAGS, 0);
 		SetTexture(i, NULL);
 
 
@@ -799,46 +800,6 @@ void CStateManager::SetStreamSource(UINT StreamNumber, ID3D11Buffer* pStreamData
 {
 	CStreamData kStreamData(pStreamData, Stride);
 
-	if (m_pD3D11Renderer && StreamNumber == 0)
-	{
-		// Use FVF to disambiguate formats with the same stride (e.g. PN vs PDT both 24 bytes)
-		ED3D11VertexFormat fvfFormat = m_pD3D11Renderer->DetectVertexFormat(m_CurrentState.m_dwFVF);
-
-		switch (Stride)
-		{
-		case 40:
-			// PNT2, SCREEN, and PDT2 (SpeedTree leaves with wind data) can all be 40 bytes.
-			// Use FVF to pick the correct format.
-			if (fvfFormat == VF_SCREEN)
-				m_pD3D11Renderer->SetVertexFormat(VF_SCREEN);
-			else if (fvfFormat == VF_PDT2)
-				m_pD3D11Renderer->SetVertexFormat(VF_PDT2);
-			else
-				m_pD3D11Renderer->SetVertexFormat(VF_PNT2);
-			break;
-		case 36: m_pD3D11Renderer->SetVertexFormat(VF_SCREEN); break;
-		case 32:
-			// PNT (Pos+Normal+Tex) and PDT2 (Pos+Diffuse+Tex0+Tex1) are both 32 bytes.
-			if (fvfFormat == VF_PDT2)
-				m_pD3D11Renderer->SetVertexFormat(VF_PDT2);
-			else
-				m_pD3D11Renderer->SetVertexFormat(VF_PNT);
-			break;
-		case 28: m_pD3D11Renderer->SetVertexFormat(VF_PDT);    break;
-		case 24:
-			// PN (Pos+Normal) and PDT (Pos+Diffuse+Tex) are both 24 bytes.
-			// Use FVF to pick the correct format.
-			if (fvfFormat == VF_PN)
-				m_pD3D11Renderer->SetVertexFormat(VF_PN);
-			else
-				m_pD3D11Renderer->SetVertexFormat(VF_PDT);
-			break;
-		case 20: m_pD3D11Renderer->SetVertexFormat(VF_PT);     break;
-		case 16: m_pD3D11Renderer->SetVertexFormat(VF_PD);     break;
-		default: break;
-		}
-	}
-
 	if (!m_bForce && m_CurrentState.m_StreamData[StreamNumber] == kStreamData)
 		return;
 
@@ -935,22 +896,6 @@ HRESULT CStateManager::DrawPrimitiveUP(D3DPRIMITIVETYPE PrimitiveType, UINT Prim
 
 	if (!CGraphicBase::ms_lpd3d11Context || !CGraphicBase::ms_lpd3d11Device || !m_pD3D11Renderer)
 		return E_FAIL;
-
-	// Detect vertex format from stride + FVF (UP draws bypass SetStreamSource)
-	{
-		ED3D11VertexFormat fvfFormat = m_pD3D11Renderer->DetectVertexFormat(m_CurrentState.m_dwFVF);
-		switch (VertexStreamZeroStride)
-		{
-		case 40: m_pD3D11Renderer->SetVertexFormat(fvfFormat == VF_SCREEN ? VF_SCREEN : VF_PNT2); break;
-		case 36: m_pD3D11Renderer->SetVertexFormat(VF_SCREEN); break;
-		case 32: m_pD3D11Renderer->SetVertexFormat(VF_PNT);    break;
-		case 28: m_pD3D11Renderer->SetVertexFormat(VF_PDT);    break;
-		case 24: m_pD3D11Renderer->SetVertexFormat(fvfFormat == VF_PN ? VF_PN : VF_PDT); break;
-		case 20: m_pD3D11Renderer->SetVertexFormat(VF_PT);     break;
-		case 16: m_pD3D11Renderer->SetVertexFormat(VF_PD);     break;
-		default: break;
-		}
-	}
 
 	// Triangle fan expansion: D3D11 doesn't support TRIANGLEFAN, so expand
 	// fan vertices (v0, v1, v2, ..., vN) into triangle list (v0,v1,v2, v0,v2,v3, ...).
@@ -1053,22 +998,6 @@ HRESULT CStateManager::DrawIndexedPrimitiveUP(D3DPRIMITIVETYPE PrimitiveType, UI
 
 	if (!CGraphicBase::ms_lpd3d11Context || !CGraphicBase::ms_lpd3d11Device || !m_pD3D11Renderer)
 		return E_FAIL;
-
-	// Detect vertex format from stride + FVF (UP draws bypass SetStreamSource)
-	{
-		ED3D11VertexFormat fvfFormat = m_pD3D11Renderer->DetectVertexFormat(m_CurrentState.m_dwFVF);
-		switch (VertexStreamZeroStride)
-		{
-		case 40: m_pD3D11Renderer->SetVertexFormat(fvfFormat == VF_SCREEN ? VF_SCREEN : VF_PNT2); break;
-		case 36: m_pD3D11Renderer->SetVertexFormat(VF_SCREEN); break;
-		case 32: m_pD3D11Renderer->SetVertexFormat(VF_PNT);    break;
-		case 28: m_pD3D11Renderer->SetVertexFormat(VF_PDT);    break;
-		case 24: m_pD3D11Renderer->SetVertexFormat(fvfFormat == VF_PN ? VF_PN : VF_PDT); break;
-		case 20: m_pD3D11Renderer->SetVertexFormat(VF_PT);     break;
-		case 16: m_pD3D11Renderer->SetVertexFormat(VF_PD);     break;
-		default: break;
-		}
-	}
 
 	UINT idxStride = (IndexDataFormat == D3DFMT_INDEX32) ? 4u : 2u;
 

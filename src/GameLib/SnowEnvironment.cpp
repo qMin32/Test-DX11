@@ -190,8 +190,8 @@ void CSnowEnvironment::Render()
 
 	m_pImageInstance->GetGraphicImagePointer()->GetTextureReference().SetTextureStage(0);
 	_mgr->SetIndexBuffer(m_pIB);
+	_mgr->SetShader(VF_PT);
 	STATEMANAGER.SetStreamSource(0, m_pVB, sizeof(SParticleVertex));
-	STATEMANAGER.SetFVF(D3DFVF_XYZ | D3DFVF_TEX1);
 	STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, dwParticleCount*4, 0, dwParticleCount*2);
 	STATEMANAGER.RestoreRenderState(RS11_ALPHABLENDENABLE);
 	STATEMANAGER.RestoreRenderState(RS11_ZWRITEENABLE);

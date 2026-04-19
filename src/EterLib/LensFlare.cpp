@@ -258,7 +258,7 @@ void CLensFlare::DrawBeforeFlare()
 	STATEMANAGER.SetTextureStageState(0, TSS11_ALPHAOP, TOP11_SELECTARG1);
 	STATEMANAGER.SetTextureStageState(0, TSS11_COLORARG1, TA11_TEXTURE);
 	
-	STATEMANAGER.SetFVF(D3DFVF_XYZ|D3DFVF_DIFFUSE|D3DFVF_TEX1);
+	_mgr->SetShader(VF_PDT);
 	STATEMANAGER.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, vertices, sizeof(SVertex));
 
 	STATEMANAGER.RestoreRenderState(RS11_LIGHTING);
@@ -536,7 +536,7 @@ void CFlare::Draw(float fBrightScale, int nWidth, int nHeight, int nX, int nY)
 	float fDY = float(nY) - float(nHeight) / 2.0f;
 
 	STATEMANAGER.SetTexture(1, NULL);
-	STATEMANAGER.SetFVF(D3DFVF_XYZ|D3DFVF_DIFFUSE|D3DFVF_TEX1);
+	_mgr->SetShader(VF_PDT);
 
 	STATEMANAGER.SetTextureStageState(0, TSS11_COLORARG1,	TA11_TEXTURE);
 	STATEMANAGER.SetTextureStageState(0, TSS11_COLORARG2,	TA11_DIFFUSE);

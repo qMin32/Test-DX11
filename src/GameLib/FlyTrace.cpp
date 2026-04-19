@@ -128,7 +128,7 @@ void CFlyTrace::Render()
 	D3DXMatrixIdentity(&matWorld);
 	
 	STATEMANAGER.SaveTransform(World, &matWorld);
-	STATEMANAGER.SetFVF(D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1);
+	_mgr->SetShader(VF_PDT);
 	STATEMANAGER.SaveRenderState(RS11_CULLMODE, D3D11_CULL_NONE);
 	
 	STATEMANAGER.SaveRenderState(RS11_ALPHABLENDENABLE, TRUE);

@@ -64,8 +64,6 @@ void CMapOutdoor::__RenderTerrain_RenderHardwareTransformPatch()
 	// Render State & TextureStageState
 	//////////////////////////////////////////////////////////////////////////
 
-	STATEMANAGER.SetFVF(D3DFVF_XYZ | D3DFVF_NORMAL);
-
 	m_iRenderedSplatNumSqSum = 0;
 	m_iRenderedPatchNum = 0;
 	m_iRenderedSplatNum = 0;
@@ -259,6 +257,7 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 	if (!pkVB)
 		return;
 
+	_mgr->SetShader(VF_PN);
 	STATEMANAGER.SetStreamSource(0, pkVB->GetD3DVertexBuffer(), m_iPatchTerrainVertexSize);
 	
 	STATEMANAGER.SetRenderState(RS11_LIGHTING, FALSE);
@@ -410,6 +409,7 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchNone(long patchnum, WORD w
 	if (!pkVB)
 		return;
 
+	_mgr->SetShader(VF_PN);
 	STATEMANAGER.SetStreamSource(0, pkVB->GetD3DVertexBuffer(), m_iPatchTerrainVertexSize);
 	STATEMANAGER.DrawIndexedPrimitive(ePrimitiveType, 0, m_iPatchTerrainVertexCount, 0, wPrimitiveCount);
 }

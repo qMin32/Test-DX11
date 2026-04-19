@@ -386,7 +386,7 @@ void CPythonGraphic::RenderCoolTimeBox(float fxCenter, float fyCenter, float fRa
 		STATEMANAGER.SaveTextureStageState(0, TSS11_ALPHAOP,	TOP11_SELECTARG1);
 		STATEMANAGER.SetTexture(0, NULL);
 		STATEMANAGER.SetTexture(1, NULL);
-		STATEMANAGER.SetFVF(D3DFVF_XYZ|D3DFVF_DIFFUSE|D3DFVF_TEX1);
+		_mgr->SetShader(VF_PDT);
 		STATEMANAGER.DrawPrimitive(D3DPT_TRIANGLELIST, 0, iTriCount);
 		STATEMANAGER.RestoreTextureStageState(0, TSS11_COLORARG1);
 		STATEMANAGER.RestoreTextureStageState(0, TSS11_COLOROP);

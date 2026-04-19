@@ -902,7 +902,7 @@ void CMapOutdoor::DrawPatchAttr(long patchnum)
 	TTerrainSplatPatch & rAttrSplatPatch = pTerrain->GetMarkedSplatPatch();
  	STATEMANAGER.SetTexture(1, rAttrSplatPatch.Splats[0].pd3dTexture);
 
-	STATEMANAGER.SetFVF(D3DFVF_XYZ | D3DFVF_NORMAL);
+	_mgr->SetShader(VF_PN);
 	STATEMANAGER.SetStreamSource(0, pTerrainPatchProxy->HardwareTransformPatch_GetVertexBufferPtr()->GetD3DVertexBuffer(), m_iPatchTerrainVertexSize);
 
 	STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLESTRIP, 0, m_iPatchTerrainVertexCount, 0, m_wNumIndices[0] - 2);

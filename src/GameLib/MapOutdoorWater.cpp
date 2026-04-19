@@ -44,26 +44,14 @@ void CMapOutdoor::RenderWater()
 	D3DXMatrixMultiply(&matTexTransformWater, &m_matViewInverse, &matTexTransformWater);
 	
 	STATEMANAGER.SaveTransform(Texture0, &matTexTransformWater);
-	STATEMANAGER.SetFVF(D3DFVF_XYZ|D3DFVF_DIFFUSE);
-
-	STATEMANAGER.SaveTextureStageState(0, TSS11_TEXCOORDINDEX, TSS11_TCI_CAMERASPACEPOSITION);
-	STATEMANAGER.SaveTextureStageState(0, TSS11_TEXTURETRANSFORMFLAGS, TTFF11_COUNT2);
 
 	STATEMANAGER.SaveSamplerState(0, SS11_MINFILTER, TF11_ANISOTROPIC);
 	STATEMANAGER.SaveSamplerState(0, SS11_MAGFILTER, TF11_ANISOTROPIC);
 	STATEMANAGER.SaveSamplerState(0, SS11_MIPFILTER, TF11_LINEAR);
 	STATEMANAGER.SaveSamplerState(0, SS11_ADDRESSU, D3D11_TEXTURE_ADDRESS_WRAP);
 	STATEMANAGER.SaveSamplerState(0, SS11_ADDRESSV, D3D11_TEXTURE_ADDRESS_WRAP);
-	
-	STATEMANAGER.SetTextureStageState(0, TSS11_COLORARG1, TA11_TEXTURE);
-	STATEMANAGER.SetTextureStageState(0, TSS11_COLOROP, TOP11_SELECTARG1);
-	STATEMANAGER.SetTextureStageState(0, TSS11_ALPHAARG1, TA11_DIFFUSE);
-	STATEMANAGER.SetTextureStageState(0, TSS11_ALPHAOP, TOP11_SELECTARG1);
-	
 
 	STATEMANAGER.SetTexture(1,NULL);
-	STATEMANAGER.SetTextureStageState(1, TSS11_COLOROP, TOP11_DISABLE);
-	STATEMANAGER.SetTextureStageState(1, TSS11_ALPHAOP, TOP11_DISABLE);
 
 	// RenderState
 	//////////////////////////////////////////////////////////////////////////
@@ -126,8 +114,6 @@ void CMapOutdoor::RenderWater()
 	STATEMANAGER.RestoreSamplerState(0, SS11_MIPFILTER);
 	STATEMANAGER.RestoreSamplerState(0, SS11_ADDRESSU);
 	STATEMANAGER.RestoreSamplerState(0, SS11_ADDRESSV);
-	STATEMANAGER.RestoreTextureStageState(0, TSS11_TEXCOORDINDEX);
-	STATEMANAGER.RestoreTextureStageState(0, TSS11_TEXTURETRANSFORMFLAGS);
 	
 	STATEMANAGER.RestoreRenderState(RS11_ZWRITEENABLE);
 	STATEMANAGER.RestoreRenderState(RS11_ALPHABLENDENABLE);
@@ -159,6 +145,8 @@ void CMapOutdoor::DrawWater(long patchnum)
 	if (!uPriCount)
 		return;
 	
+	_mgr->SetShader(VF_PD);
+
 	STATEMANAGER.SetStreamSource(0, pkVB->GetD3DVertexBuffer(), sizeof(SWaterVertex));
 	STATEMANAGER.DrawPrimitive(D3DPT_TRIANGLELIST, 0, uPriCount);
 

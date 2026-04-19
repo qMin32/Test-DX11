@@ -1307,7 +1307,7 @@ void CSpeedTreeWrapper::RenderBillboards(void) const
 			{ pCoords[9], pCoords[10], pCoords[11], pTexCoords[6], pTexCoords[7] },
 		};
 		
-		STATEMANAGER.SetFVF(D3DFVF_XYZ | D3DFVF_TEX1);
+		_mgr->SetShader(VF_PT);
 		STATEMANAGER.SetRenderState(RS11_ALPHAREF, DWORD(m_pGeometryCache->m_sBillboard0.m_fAlphaTestValue));
 		
 		ms_faceCount += 2;

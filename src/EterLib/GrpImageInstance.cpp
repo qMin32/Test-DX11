@@ -99,7 +99,7 @@ void CGraphicImageInstance::OnRender()
 
 		STATEMANAGER.SetTexture(0, pTexture->GetSRV());
 		STATEMANAGER.SetTexture(1, NULL);
-		STATEMANAGER.SetFVF(D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1);
+		_mgr->SetShader(VF_PDT);
 		STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 4, 0, 2);
 	}
 

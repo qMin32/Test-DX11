@@ -227,8 +227,8 @@ void CDecal::Render()
 	D3DXMatrixIdentity(&matWorld);
 	STATEMANAGER.SetTransform(World, &matWorld);
 	
-	STATEMANAGER.SetFVF(D3DFVF_XYZ|D3DFVF_DIFFUSE|D3DFVF_TEX1);
-	
+	_mgr->SetShader(VF_PDT);
+
 	for (DWORD dwi = 0; dwi < m_TriangleFanStructVector.size(); ++dwi)
 		STATEMANAGER.DrawIndexedPrimitiveUP(D3DPT_TRIANGLEFAN,
 		m_TriangleFanStructVector[dwi].m_wMinIndex,

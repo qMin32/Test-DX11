@@ -173,6 +173,8 @@ bool CGraphicBase::SetPDTStream(SPDTVertexRaw* pSrcVertices, UINT uVtxCount)
 	memcpy(mapped.pData, pSrcVertices, sizeof(TPDTVertex) * uVtxCount);
 	ms_lpd3d11Context->Unmap(pVB, 0);
 
+	_mgr->SetShader(VF_PDT);
+
 	STATEMANAGER.SetStreamSource(0, pVB, sizeof(TPDTVertex));
 	return true;
 }
