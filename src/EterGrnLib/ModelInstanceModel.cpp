@@ -34,10 +34,8 @@ void CGrannyModelInstance::SetLinkedModelPointer(CGrannyModel* pkModel, VBufferP
 
 	m_pModel->AddReference();
 	
-	if (pkSharedDeformableVertexBuffer)
-		__SetSharedDeformableVertexBuffer(pkSharedDeformableVertexBuffer);
-	else
-		__CreateDynamicVertexBuffer();
+	m_pkSharedDeformableVertexBuffer = nullptr;
+	m_kLocalDeformableVertexBuffer = nullptr;
 
 	__CreateModelInstance();
 	

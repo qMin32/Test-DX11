@@ -13,6 +13,27 @@ granny_data_type_definition GrannyPNT3322VertexType[5] =
 	{GrannyEndMember}
 };
 
+granny_data_type_definition GrannySkinnedPNTVertexType[6] =
+{
+	{GrannyReal32Member, GrannyVertexPositionName, 0, 3},
+	{GrannyReal32Member, GrannyVertexNormalName, 0, 3},
+	{GrannyReal32Member, GrannyVertexBoneWeightsName, 0, 4},
+	{GrannyUInt32Member, GrannyVertexBoneIndicesName, 0, 4},
+	{GrannyReal32Member, GrannyVertexTextureCoordinatesName"0", 0, 2},
+	{GrannyEndMember}
+};
+
+granny_data_type_definition GrannySkinnedPNT2VertexType[7] =
+{
+	{GrannyReal32Member, GrannyVertexPositionName, 0, 3},
+	{GrannyReal32Member, GrannyVertexNormalName, 0, 3},
+	{GrannyReal32Member, GrannyVertexBoneWeightsName, 0, 4},
+	{GrannyUInt32Member, GrannyVertexBoneIndicesName, 0, 4},
+	{GrannyReal32Member, GrannyVertexTextureCoordinatesName"0", 0, 2},
+	{GrannyReal32Member, GrannyVertexTextureCoordinatesName"1", 0, 2},
+	{GrannyEndMember}
+};
+
 void CGrannyMesh::LoadIndices(void * dstBaseIndices)
 {
 	const granny_mesh * pgrnMesh = GetGrannyMeshPointer();
@@ -42,6 +63,27 @@ void CGrannyMesh::LoadVertices(void* dstBaseVertices)
 	}
 
 	GrannyCopyMeshVertices(pgrnMesh, m_pgrnMeshType, dstVertices);
+}
+
+void CGrannyMesh::LoadSkinnedVertices(void* dstBaseVertices, bool pnt2)
+{
+	const granny_mesh* pgrnMesh = GetGrannyMeshPointer();
+	if (!pgrnMesh)
+		return;
+
+	if (GrannyMeshIsRigid(pgrnMesh))
+		return;
+
+	if (pnt2)
+	{
+		TGrannySkinnedPNT2Vertex* dstVertices = ((TGrannySkinnedPNT2Vertex*)dstBaseVertices) + m_vtxBasePos;
+		GrannyCopyMeshVertices(pgrnMesh, GrannySkinnedPNT2VertexType, dstVertices);
+	}
+	else
+	{
+		TGrannySkinnedPNTVertex* dstVertices = ((TGrannySkinnedPNTVertex*)dstBaseVertices) + m_vtxBasePos;
+		GrannyCopyMeshVertices(pgrnMesh, GrannySkinnedPNTVertexType, dstVertices);
+	}
 }
 
 bool CGrannyMesh::IsPNT2() const

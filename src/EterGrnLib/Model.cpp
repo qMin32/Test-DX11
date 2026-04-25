@@ -34,6 +34,11 @@ bool CGrannyModel::CanDeformPNTVertices() const
 	return m_canDeformPNVertices;
 }
 
+bool CGrannyModel::HasSkinnedMesh() const
+{
+	return m_deformVtxCount > 0 && m_skinnedVtxBuf != nullptr;
+}
+
 void CGrannyModel::DeformPNTVertices(void * dstBaseVertices, D3DXMATRIX * boneMatrices, const std::vector<granny_mesh_binding*>& c_rvct_pgrnMeshBinding) const
 {
 	int meshCount = GetMeshCount();
@@ -83,6 +88,16 @@ VBufferPtr CGrannyModel::GetVertexBuffer() const
 	return m_pntVtxBuf;
 }
 
+VBufferPtr CGrannyModel::GetSkinnedVertexBuffer() const
+{
+	return m_skinnedVtxBuf;
+}
+
+UINT CGrannyModel::GetSkinnedVertexStride() const
+{
+	return m_skinnedStride;
+}
+
 bool CGrannyModel::LoadVertices()
 {
 	if (m_rigidVtxCount <= 0)
@@ -125,6 +140,43 @@ bool CGrannyModel::LoadVertices()
 	return true;
 }
 
+
+bool CGrannyModel::LoadSkinnedVertices()
+{
+	if (m_deformVtxCount <= 0)
+		return true;
+
+	assert(m_meshs != NULL);
+
+	bool hasPNT2 = false;
+	for (int i = 0; i < m_pgrnModel->MeshBindingCount; ++i)
+	{
+		if (!GrannyMeshIsRigid(m_pgrnModel->MeshBindings[i].Mesh) && m_meshs[i].IsPNT2())
+		{
+			hasPNT2 = true;
+			break;
+		}
+	}
+
+	if (hasPNT2)
+	{
+		m_skinnedStride = sizeof(TGrannySkinnedPNT2Vertex);
+		std::vector<TGrannySkinnedPNT2Vertex> vertices(m_deformVtxCount);
+		for (int i = 0; i < m_pgrnModel->MeshBindingCount; ++i)
+			m_meshs[i].LoadSkinnedVertices(vertices.data(), true);
+		_mgr->CreateVertexBuffer(m_skinnedVtxBuf, vertices.data(), m_deformVtxCount, m_skinnedStride);
+	}
+	else
+	{
+		m_skinnedStride = sizeof(TGrannySkinnedPNTVertex);
+		std::vector<TGrannySkinnedPNTVertex> vertices(m_deformVtxCount);
+		for (int i = 0; i < m_pgrnModel->MeshBindingCount; ++i)
+			m_meshs[i].LoadSkinnedVertices(vertices.data(), false);
+		_mgr->CreateVertexBuffer(m_skinnedVtxBuf, vertices.data(), m_deformVtxCount, m_skinnedStride);
+	}
+
+	return true;
+}
 
 bool CGrannyModel::LoadIndices()
 {
@@ -285,6 +337,9 @@ bool CGrannyModel::CreateFromGrannyModelPointer(granny_model* pgrnModel)
 	if (!LoadVertices())
 		return false;
 
+	if (!LoadSkinnedVertices())
+		return false;
+
 	if (!LoadIndices())
 		return false;
 
@@ -343,6 +398,7 @@ void CGrannyModel::Initialize()
 	m_pgrnModel = NULL;
 	m_meshs = NULL;
 	m_meshNodes = NULL;
+	m_skinnedVtxBuf = nullptr;
 
 	m_meshNodeSize = 0;
 	m_meshNodeCapacity = 0;
@@ -355,6 +411,7 @@ void CGrannyModel::Initialize()
 	m_canDeformPNVertices = false;
 
 	m_stride = 0;
+	m_skinnedStride = 0;
 	m_bHaveBlendThing = false;
 }
 

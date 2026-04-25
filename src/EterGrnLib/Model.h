@@ -29,6 +29,7 @@ class CGrannyModel : public CReferenceObject
 		int GetVertexCount() const;
 
 		bool CanDeformPNTVertices() const;
+		bool HasSkinnedMesh() const;
 		void DeformPNTVertices(void* dstBaseVertices, D3DXMATRIX* boneMatrices, const std::vector<granny_mesh_binding*>& c_rvct_pgrnMeshBinding) const;
 
 		int GetIdxCount();
@@ -38,6 +39,8 @@ class CGrannyModel : public CReferenceObject
 		const CGrannyMesh* GetMeshPointer(int iMesh) const;
 
 		VBufferPtr GetVertexBuffer() const;
+		VBufferPtr GetSkinnedVertexBuffer() const;
+		UINT GetSkinnedVertexStride() const;
 		IBufferPtr GetIndexBuffer() const;
 
 		const CGrannyModel::TMeshNode*  GetMeshNodeList(CGrannyMesh::EType eMeshType, CGrannyMaterial::EType eMtrlType) const;
@@ -47,6 +50,7 @@ class CGrannyModel : public CReferenceObject
 	protected:
 		bool LoadMeshs();		
 		bool LoadVertices();
+		bool LoadSkinnedVertices();
 		bool LoadIndices();
 		void Initialize();
 
@@ -61,6 +65,7 @@ class CGrannyModel : public CReferenceObject
 		CGrannyMesh *			m_meshs;
 
 		VBufferPtr				m_pntVtxBuf;	// for rigid mesh
+		VBufferPtr				m_skinnedVtxBuf;
 		IBufferPtr				m_idxBuf;
 
 		TMeshNode *				m_meshNodes;
@@ -84,4 +89,5 @@ class CGrannyModel : public CReferenceObject
 	
 	protected:
 		UINT m_stride;
+		UINT m_skinnedStride;
 };

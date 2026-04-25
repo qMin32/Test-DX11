@@ -3,11 +3,32 @@
 #include "Material.h"
 
 extern granny_data_type_definition GrannyPNT3322VertexType[5];
+extern granny_data_type_definition GrannySkinnedPNTVertexType[6];
+extern granny_data_type_definition GrannySkinnedPNT2VertexType[7];
 
 struct granny_pnt3322_vertex
 {
     granny_real32 Position[3];
     granny_real32 Normal[3];
+    granny_real32 UV0[2];
+    granny_real32 UV1[2];
+};
+
+struct TGrannySkinnedPNTVertex
+{
+    granny_real32 Position[3];
+    granny_real32 Normal[3];
+    granny_real32 BoneWeights[4];
+    granny_uint32 BoneIndices[4];
+    granny_real32 UV0[2];
+};
+
+struct TGrannySkinnedPNT2Vertex
+{
+    granny_real32 Position[3];
+    granny_real32 Normal[3];
+    granny_real32 BoneWeights[4];
+    granny_uint32 BoneIndices[4];
     granny_real32 UV0[2];
     granny_real32 UV1[2];
 };
@@ -38,6 +59,7 @@ class CGrannyMesh
 		bool					CreateFromGrannyMeshPointer(granny_skeleton* pgrnSkeleton, granny_mesh* pgrnMesh, int vtxBasePos, int idxBasePos, CGrannyMaterialPalette& rkMtrlPal);			
 		void					LoadIndices(void* dstBaseIndices);
 		void					LoadVertices(void* dstBaseVertices);
+		void					LoadSkinnedVertices(void* dstBaseVertices, bool pnt2);
 		bool					IsPNT2() const;
 		void					Destroy();
 

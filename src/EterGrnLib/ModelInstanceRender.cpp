@@ -3,6 +3,7 @@
 #include "ModelInstance.h"
 #include "Model.h"
 #include "qMin32Lib/All.h"
+#include "GrannySkinning.h"
 
 #ifdef _TEST
 
@@ -32,10 +33,6 @@ void CGrannyModelInstance::DeformNoSkin(const D3DXMATRIX * c_pWorldMatrix)
 	if (IsEmpty())
 		return;
 
-	// DELETED
-	//m_pgrnWorldPose = m_pgrnWorldPoseReal;
-	///////////////////////////////
-	
 	UpdateWorldPose();
 	UpdateWorldMatrices(c_pWorldMatrix);
 }
@@ -48,32 +45,30 @@ void CGrannyModelInstance::DeformNoSkin(const D3DXMATRIX * c_pWorldMatrix)
 // With One Texture
 void CGrannyModelInstance::RenderWithOneTexture()
 {
-	// FIXME : Deform, Render, BlendRender를 묶어 상위에서 걸러주는 것이 더 나을 듯 - [levites]
 	if (IsEmpty())
 		return;
 
 #ifdef _TEST
 	Granny_RenderBoxBones(GrannyGetSourceSkeleton(m_pgrnModelInstance), m_pgrnWorldPose, TEST_matWorld);
 	if (GetAsyncKeyState('P'))
-		Tracef("render %x", m_pgrnModelInstance);	
+		Tracef("render %x", m_pgrnModelInstance);
 	return;
 #endif
 
-	_mgr->SetShader(VF_PNT);
-	// WORK
-	auto lpd3dDeformPNTVtxBuf = GetDeformableVertexBuffer();
-	// END_OF_WORK
+	auto skinnedVB = m_pModel->GetSkinnedVertexBuffer();
+	auto rigidVB = m_pModel->GetVertexBuffer();
 
-	auto lpd3dRigidPNTVtxBuf = m_pModel->GetVertexBuffer();
-
-	if (lpd3dDeformPNTVtxBuf)
+	if (skinnedVB)
 	{
-		_mgr->SetVertexBuffer(lpd3dDeformPNTVtxBuf, sizeof(TPNTVertex));
+		GrannySkinning_BindPNT(true);
+		_mgr->SetVertexBuffer(skinnedVB, m_pModel->GetSkinnedVertexStride());
 		RenderMeshNodeListWithOneTexture(CGrannyMesh::TYPE_DEFORM, CGrannyMaterial::TYPE_DIFFUSE_PNT);
 	}
-	if (lpd3dRigidPNTVtxBuf)
+
+	_mgr->SetShader(VF_PNT);
+	if (rigidVB)
 	{
-		_mgr->SetVertexBuffer(lpd3dRigidPNTVtxBuf, sizeof(TPNTVertex));
+		_mgr->SetVertexBuffer(rigidVB, sizeof(TPNTVertex));
 		RenderMeshNodeListWithOneTexture(CGrannyMesh::TYPE_RIGID, CGrannyMaterial::TYPE_DIFFUSE_PNT);
 	}
 }
@@ -83,48 +78,43 @@ void CGrannyModelInstance::BlendRenderWithOneTexture()
 	if (IsEmpty())
 		return;
 
-	// WORK
-	auto lpd3dDeformPNTVtxBuf = GetDeformableVertexBuffer();
-	// END_OF_WORK
-	auto lpd3dRigidPNTVtxBuf = m_pModel->GetVertexBuffer();
+	auto skinnedVB = m_pModel->GetSkinnedVertexBuffer();
+	auto rigidVB = m_pModel->GetVertexBuffer();
 
-	_mgr->SetShader(VF_PNT);
-
-	if (lpd3dDeformPNTVtxBuf)
+	if (skinnedVB)
 	{
-		_mgr->SetVertexBuffer(lpd3dDeformPNTVtxBuf, sizeof(TPNTVertex));
+		GrannySkinning_BindPNT(true);
+		_mgr->SetVertexBuffer(skinnedVB, m_pModel->GetSkinnedVertexStride());
 		RenderMeshNodeListWithOneTexture(CGrannyMesh::TYPE_DEFORM, CGrannyMaterial::TYPE_BLEND_PNT);
 	}
 
-	if (lpd3dRigidPNTVtxBuf)
+	_mgr->SetShader(VF_PNT);
+	if (rigidVB)
 	{
-		_mgr->SetVertexBuffer(lpd3dRigidPNTVtxBuf, sizeof(TPNTVertex));
+		_mgr->SetVertexBuffer(rigidVB, sizeof(TPNTVertex));
 		RenderMeshNodeListWithOneTexture(CGrannyMesh::TYPE_RIGID, CGrannyMaterial::TYPE_BLEND_PNT);
 	}
 }
 
-// With Two Texture
 void CGrannyModelInstance::RenderWithTwoTexture()
 {
-	// FIXME : Deform, Render, BlendRender를 묶어 상위에서 걸러주는 것이 더 나을 듯 - [levites]
 	if (IsEmpty())
 		return;
 
-	_mgr->SetShader(VF_PNT2);
+	auto skinnedVB = m_pModel->GetSkinnedVertexBuffer();
+	auto rigidVB = m_pModel->GetVertexBuffer();
 
-	// WORK
-	auto lpd3dDeformPNTVtxBuf = GetDeformableVertexBuffer();
-	// END_OF_WORK
-	auto lpd3dRigidPNTVtxBuf = m_pModel->GetVertexBuffer();
-
-	if (lpd3dDeformPNTVtxBuf)
+	if (skinnedVB)
 	{
-		_mgr->SetVertexBuffer(lpd3dDeformPNTVtxBuf, sizeof(TPNT2Vertex));
+		GrannySkinning_BindPNT2(true);
+		_mgr->SetVertexBuffer(skinnedVB, m_pModel->GetSkinnedVertexStride());
 		RenderMeshNodeListWithTwoTexture(CGrannyMesh::TYPE_DEFORM, CGrannyMaterial::TYPE_DIFFUSE_PNT);
 	}
-	if (lpd3dRigidPNTVtxBuf)
+
+	_mgr->SetShader(VF_PNT2);
+	if (rigidVB)
 	{
-		_mgr->SetVertexBuffer(lpd3dRigidPNTVtxBuf, sizeof(TPNT2Vertex));
+		_mgr->SetVertexBuffer(rigidVB, sizeof(TPNT2Vertex));
 		RenderMeshNodeListWithTwoTexture(CGrannyMesh::TYPE_RIGID, CGrannyMaterial::TYPE_DIFFUSE_PNT);
 	}
 }
@@ -134,22 +124,20 @@ void CGrannyModelInstance::BlendRenderWithTwoTexture()
 	if (IsEmpty())
 		return;
 
-	// WORK
-	auto lpd3dDeformPNTVtxBuf = GetDeformableVertexBuffer();
-	// END_OF_WORK
-	auto lpd3dRigidPNTVtxBuf = m_pModel->GetVertexBuffer();
+	auto skinnedVB = m_pModel->GetSkinnedVertexBuffer();
+	auto rigidVB = m_pModel->GetVertexBuffer();
 
-	_mgr->SetShader(VF_PNT);
-
-	if (lpd3dDeformPNTVtxBuf)
+	if (skinnedVB)
 	{
-		_mgr->SetVertexBuffer(lpd3dDeformPNTVtxBuf, sizeof(TPNT2Vertex));
+		GrannySkinning_BindPNT2(true);
+		_mgr->SetVertexBuffer(skinnedVB, m_pModel->GetSkinnedVertexStride());
 		RenderMeshNodeListWithTwoTexture(CGrannyMesh::TYPE_DEFORM, CGrannyMaterial::TYPE_BLEND_PNT);
 	}
 
-	if (lpd3dRigidPNTVtxBuf)
+	_mgr->SetShader(VF_PNT2);
+	if (rigidVB)
 	{
-		_mgr->SetVertexBuffer(lpd3dRigidPNTVtxBuf, sizeof(TPNT2Vertex));
+		_mgr->SetVertexBuffer(rigidVB, sizeof(TPNT2Vertex));
 		RenderMeshNodeListWithTwoTexture(CGrannyMesh::TYPE_RIGID, CGrannyMaterial::TYPE_BLEND_PNT);
 	}
 }
@@ -159,30 +147,57 @@ void CGrannyModelInstance::RenderWithoutTexture()
 	if (IsEmpty())
 		return;
 
-	_mgr->SetShader(VF_PNT);
 	STATEMANAGER.SetTexture(0, NULL);
 	STATEMANAGER.SetTexture(1, NULL);
 
-	// WORK
-	auto lpd3dDeformPNTVtxBuf = GetDeformableVertexBuffer();
-	// END_OF_WORK
-	auto lpd3dRigidPNTVtxBuf = m_pModel->GetVertexBuffer();
+	auto skinnedVB = m_pModel->GetSkinnedVertexBuffer();
+	auto rigidVB = m_pModel->GetVertexBuffer();
 
-	if (lpd3dDeformPNTVtxBuf)
+	if (skinnedVB)
 	{
-		_mgr->SetVertexBuffer(lpd3dDeformPNTVtxBuf, sizeof(TPNTVertex));
+		GrannySkinning_BindPNT(true);
+		_mgr->SetVertexBuffer(skinnedVB, m_pModel->GetSkinnedVertexStride());
 		RenderMeshNodeListWithoutTexture(CGrannyMesh::TYPE_DEFORM, CGrannyMaterial::TYPE_DIFFUSE_PNT);
 		RenderMeshNodeListWithoutTexture(CGrannyMesh::TYPE_DEFORM, CGrannyMaterial::TYPE_BLEND_PNT);
 	}
 
-	if (lpd3dRigidPNTVtxBuf)
+	_mgr->SetShader(VF_PNT);
+	if (rigidVB)
 	{
-		_mgr->SetVertexBuffer(lpd3dRigidPNTVtxBuf, sizeof(TPNTVertex));
+		_mgr->SetVertexBuffer(rigidVB, sizeof(TPNTVertex));
 		RenderMeshNodeListWithoutTexture(CGrannyMesh::TYPE_RIGID, CGrannyMaterial::TYPE_DIFFUSE_PNT);
 		RenderMeshNodeListWithoutTexture(CGrannyMesh::TYPE_RIGID, CGrannyMaterial::TYPE_BLEND_PNT);
 	}
 }
 
+bool CGrannyModelInstance::UploadMeshBonePaletteToShader(int iMesh)
+{
+	if (!m_pModel || !__GetWorldPosePtr())
+		return false;
+	if (iMesh < 0 || iMesh >= (int)m_vct_pgrnMeshBinding.size())
+		return false;
+
+	int* boneIndices = __GetMeshBoneIndices((unsigned int)iMesh);
+	if (!boneIndices)
+		return false;
+
+	const CGrannyMesh* pMesh = m_pModel->GetMeshPointer(iMesh);
+	if (!pMesh || !pMesh->GetGrannyMeshPointer())
+		return false;
+
+	const int meshBoneCount = pMesh->GetGrannyMeshPointer()->BoneBindingCount;
+	const D3DXMATRIX* composite = (const D3DXMATRIX*)GrannyGetWorldPoseComposite4x4Array(__GetWorldPosePtr());
+	DirectX::XMFLOAT4X4 palette[GRANNY_DX11_MAX_BONES];
+	const int count = std::min(meshBoneCount, GRANNY_DX11_MAX_BONES);
+
+	for (int i = 0; i < count; ++i)
+	{
+		D3DXMATRIX m = composite[boneIndices[i]];
+		memcpy(&palette[i], &m, sizeof(DirectX::XMFLOAT4X4));
+	}
+
+	return GrannySkinning_UploadBonePalette(palette, count);
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -207,8 +222,9 @@ void CGrannyModelInstance::RenderMeshNodeListWithOneTexture(CGrannyMesh::EType e
 
 		_mgr->SetIndexBuffer(lpd3dIdxBuf);
 		STATEMANAGER.SetTransform(World, &m_meshMatrices[pMeshNode->iMesh]);
+		if (eMeshType == CGrannyMesh::TYPE_DEFORM)
+			UploadMeshBonePaletteToShader(pMeshNode->iMesh);
 
-		/////
 		const CGrannyMesh::TTriGroupNode* pTriGroupNode = pMesh->GetTriGroupNodeList(eMtrlType);
 		int vtxCount = pMesh->GetVertexCount();
 
@@ -216,7 +232,6 @@ void CGrannyModelInstance::RenderMeshNodeListWithOneTexture(CGrannyMesh::EType e
 		{
 			ms_faceCount += pTriGroupNode->triCount;
 
-			// MR-12: Fix specular isolation issue
 			CGrannyMaterial& rkMtrl = m_kMtrlPal.GetMaterialRef(pTriGroupNode->mtrlIndex);
 
 			if (!material_data_.pImage)
@@ -224,7 +239,6 @@ void CGrannyModelInstance::RenderMeshNodeListWithOneTexture(CGrannyMesh::EType e
 				if (std::fabs(rkMtrl.GetSpecularPower() - material_data_.fSpecularPower) >= std::numeric_limits<float>::epsilon())
 					rkMtrl.SetSpecularInfo(material_data_.isSpecularEnable, material_data_.fSpecularPower, material_data_.bSphereMapIndex);
 			}
-			// MR-12: -- END OF -- Fix specular isolation issue
 
 			rkMtrl.ApplyRenderState();
 			STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLELIST, vtxMeshBasePos, 0, vtxCount, pTriGroupNode->idxPos, pTriGroupNode->triCount);
@@ -232,7 +246,6 @@ void CGrannyModelInstance::RenderMeshNodeListWithOneTexture(CGrannyMesh::EType e
 			
 			pTriGroupNode = pTriGroupNode->pNextTriGroupNode;
 		}
-		/////
 
 		pMeshNode = pMeshNode->pNextMeshNode;
 	}
@@ -255,8 +268,9 @@ void CGrannyModelInstance::RenderMeshNodeListWithTwoTexture(CGrannyMesh::EType e
 
 		_mgr->SetIndexBuffer(lpd3dIdxBuf);
 		STATEMANAGER.SetTransform(World, &m_meshMatrices[pMeshNode->iMesh]);
+		if (eMeshType == CGrannyMesh::TYPE_DEFORM)
+			UploadMeshBonePaletteToShader(pMeshNode->iMesh);
 
-		/////
 		const CGrannyMesh::TTriGroupNode* pTriGroupNode = pMesh->GetTriGroupNodeList(eMtrlType);
 		int vtxCount = pMesh->GetVertexCount();
 		while (pTriGroupNode)
@@ -269,7 +283,6 @@ void CGrannyModelInstance::RenderMeshNodeListWithTwoTexture(CGrannyMesh::EType e
 			STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLELIST, vtxMeshBasePos, 0, vtxCount, pTriGroupNode->idxPos, pTriGroupNode->triCount);
 			pTriGroupNode = pTriGroupNode->pNextTriGroupNode;
 		}
-		/////
 
 		pMeshNode = pMeshNode->pNextMeshNode;
 	}
@@ -292,8 +305,9 @@ void CGrannyModelInstance::RenderMeshNodeListWithoutTexture(CGrannyMesh::EType e
 
 		_mgr->SetIndexBuffer(lpd3dIdxBuf);
 		STATEMANAGER.SetTransform(World, &m_meshMatrices[pMeshNode->iMesh]);
+		if (eMeshType == CGrannyMesh::TYPE_DEFORM)
+			UploadMeshBonePaletteToShader(pMeshNode->iMesh);
 
-		/////
 		const CGrannyMesh::TTriGroupNode* pTriGroupNode = pMesh->GetTriGroupNodeList(eMtrlType);
 		int vtxCount = pMesh->GetVertexCount();
 
@@ -303,7 +317,6 @@ void CGrannyModelInstance::RenderMeshNodeListWithoutTexture(CGrannyMesh::EType e
 			STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLELIST, vtxMeshBasePos, 0, vtxCount, pTriGroupNode->idxPos, pTriGroupNode->triCount);
 			pTriGroupNode = pTriGroupNode->pNextTriGroupNode;
 		}
-		/////
 
 		pMeshNode = pMeshNode->pNextMeshNode;
 	}

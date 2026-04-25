@@ -161,8 +161,6 @@ CGrannyLODController::CGrannyLODController() :
 
 CGrannyLODController::~CGrannyLODController()
 {
-	__FreeDeformVertexBuffer(m_pkSharedDeformableVertexBuffer);
-
 	Clear();
 }
 
@@ -218,15 +216,13 @@ void CGrannyLODController::AddModel(CGraphicThing * pThing, int iSrcModel, CGran
 	
 	CGrannyModelInstance * pModelInstance = CGrannyModelInstance::New();
 	
-	__ReserveSharedDeformableVertexBuffer(pModel->GetDeformVertexCount());
-
 	if (pSkelLODController)
 	{
-		pModelInstance->SetLinkedModelPointer(pModel, m_pkSharedDeformableVertexBuffer, &pSkelLODController->m_pCurrentModelInstance);
+		pModelInstance->SetLinkedModelPointer(pModel, nullptr, &pSkelLODController->m_pCurrentModelInstance);
 	}
 	else
 	{		
-		pModelInstance->SetLinkedModelPointer(pModel, m_pkSharedDeformableVertexBuffer, NULL);
+		pModelInstance->SetLinkedModelPointer(pModel, nullptr, NULL);
 	}
 
 	// END_OF_WORK
@@ -234,7 +230,7 @@ void CGrannyLODController::AddModel(CGraphicThing * pThing, int iSrcModel, CGran
 	if (!m_pCurrentModelInstance)
 	{
 		m_pCurrentModelInstance = pModelInstance;
-		pModelInstance->DeformNoSkin(&ms_matIdentity);
+		pModelInstance->Deform(&ms_matIdentity);
 
 		D3DXVECTOR3 vtMin, vtMax;
 		pModelInstance->GetBoundBox(&vtMin, &vtMax);
@@ -254,7 +250,7 @@ void CGrannyLODController::AddModel(CGraphicThing * pThing, int iSrcModel, CGran
 	{
 		// FIXME : CModelInstance::m_pgrnWorldPose를 Update에서 사용하는데,
 		//         Deform을 하지 않으면 NULL 입니다. 구조가 조금 바뀌어야 할지도.. - [levites]
- 		pModelInstance->DeformNoSkin(&ms_matIdentity);
+ 		pModelInstance->Deform(&ms_matIdentity);
 	}	
 
 	pThing->Release();

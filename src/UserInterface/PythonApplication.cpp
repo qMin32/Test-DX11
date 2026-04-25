@@ -13,9 +13,6 @@
 
 #include <utf8.h>
 
-extern void GrannyCreateSharedDeformBuffer();
-extern void GrannyDestroySharedDeformBuffer();
-
 float MIN_FOG = 2400.0f;
 double g_specularSpd=0.007f;
 
@@ -898,8 +895,6 @@ bool CPythonApplication::Create(PyObject * poSelf, const char * c_szName, int wi
 		if (!CreateDevice(m_pySystem.GetWidth(), m_pySystem.GetHeight(), Windowed, m_pySystem.GetBPP(), m_pySystem.GetFrequency()))
 			return false;
 
-		GrannyCreateSharedDeformBuffer();
-
 		if (m_pySystem.IsAutoTiling())
 		{
 			if (m_grpDevice.IsFastTNL())
@@ -1116,8 +1111,6 @@ void CPythonApplication::Destroy()
 	// DEFAULT_FONT
 	DefaultFont_Cleanup();
 	// END_OF_DEFAULT_FONT
-
-	GrannyDestroySharedDeformBuffer();
 
 	m_pyGraphic.Destroy();
 	

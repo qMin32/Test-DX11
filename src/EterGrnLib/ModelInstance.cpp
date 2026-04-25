@@ -72,9 +72,7 @@ bool CGrannyModelInstance::IsEmpty()
 }
 
 bool CGrannyModelInstance::CreateDeviceObjects()
-{	
-	__CreateDynamicVertexBuffer();
-
+{
 	return true;
 }
 

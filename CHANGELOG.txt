@@ -16,3 +16,8 @@ New VertexBuffer class.
 New ConstantBufferManager to create/set constants. 
 /////////////////////////////             /////////////////////////////
 
+
+//////////////// first part skinned gpu ////////////////
+This is the initial test implementation.
+ The next part will use the new manager to create and bind the shaders.
+/////////////////////////////             /////////////////////////////

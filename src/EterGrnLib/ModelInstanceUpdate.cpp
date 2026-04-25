@@ -61,20 +61,6 @@ void CGrannyModelInstance::Deform(const D3DXMATRIX* c_pWorldMatrix)
 
 	UpdateWorldPose();
 	UpdateWorldMatrices(c_pWorldMatrix);
-
-	auto vb = GetDeformableVertexBuffer();
-	if (!vb)
-		return;
-
-	const UINT deformCount = m_pModel->GetDeformVertexCount();
-	if (!deformCount)
-		return;
-
-	std::vector<TPNTVertex> temp(deformCount);
-	DeformPNTVertices(temp.data());
-
-	if (!vb->Update(temp.data(), temp.size()))
-		TraceError("GRANNY DEFORM DYNAMIC BUFFER UPDATE ERROR");
 }
 
 //////////////////////////////////////////////////////

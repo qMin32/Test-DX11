@@ -147,6 +147,7 @@ class CGrannyModelInstance : public CGraphicCollisionObject
 		void	UpdateWorldPose();
 		void	UpdateWorldMatrices(const D3DXMATRIX * c_pWorldMatrix);
 		void	DeformPNTVertices(void * pvDest);
+		bool	UploadMeshBonePaletteToShader(int iMesh);
 
 		void	RenderMeshNodeListWithOneTexture(CGrannyMesh::EType eMeshType, CGrannyMaterial::EType eMtrlType);
 		void	RenderMeshNodeListWithTwoTexture(CGrannyMesh::EType eMeshType, CGrannyMaterial::EType eMtrlType);

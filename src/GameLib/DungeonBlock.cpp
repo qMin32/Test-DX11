@@ -220,10 +220,7 @@ bool CDungeonBlock::Load(const char * c_szFileName)
 	for (int i = 0; i < m_pThing->GetModelCount(); ++i)
 	{
 		CDungeonModelInstance* pModelInstance = new CDungeonModelInstance;
-		DWORD dwVertexCount = m_pThing->GetModelPointer(i)->GetVertexCount();
-		_mgr->CreateVertexBuffer(m_kDeformableVertexBuffer, nullptr, dwVertexCount, sizeof(TPNTVertex), true);
-		pModelInstance->SetMainModelPointer(m_pThing->GetModelPointer(i), m_kDeformableVertexBuffer);
-		m_ModelInstanceContainer.push_back(pModelInstance);
+		pModelInstance->SetMainModelPointer(m_pThing->GetModelPointer(i), nullptr);
 	}
 
 	return true;
