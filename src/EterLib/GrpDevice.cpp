@@ -10,6 +10,7 @@ static ID3D11InfoQueue* s_pD3D11InfoQueue = NULL;
 
 #include <intrin.h>
 #include <utf8.h>
+#include <EterGrnLib/GrannySkinning.h>
 
 bool CPU_HAS_SSE2 = false;
 bool GRAPHICS_CAPS_CAN_NOT_DRAW_LINE = false;
@@ -639,7 +640,7 @@ bool CGraphicDevice::CreateD3D11(HWND hWnd, int iHres, int iVres, bool bWindowed
 		m_pD3D11Renderer = NULL;
 		return false;
 	}
-
+	GrannySkinning_Initialize(ms_lpd3d11Device, ms_lpd3d11Context);
 	m_pD3D11Renderer->SetScreenSize((float)iHres, (float)iVres);
 
 	Tracenf("D3D11: Device ready (%dx%d)", iHres, iVres);
@@ -658,6 +659,7 @@ void CGraphicDevice::DestroyD3D11()
 	safe_release(ms_lpd3d11SwapChain);
 	safe_release(ms_lpd3d11Context);
 	safe_release(ms_lpd3d11Device);
+	GrannySkinning_Destroy();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
