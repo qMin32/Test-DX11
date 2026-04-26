@@ -4,7 +4,11 @@
 #include "EterBase/Stl.h"
 #include "DecodedImageData.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+
 #include <stb_image.h>
+#include <stb_image_write.h>
 
 #if defined(_M_IX86) || defined(_M_X64)
 #include <emmintrin.h>  // SSE2
