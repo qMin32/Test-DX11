@@ -124,6 +124,7 @@ bool CD3D11Renderer::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pCon
 	_mgr->SetConstantBuffer(_mgr->GetCbMgr()->m_pCBTexTransform, 3);
 	_mgr->SetConstantBuffer(_mgr->GetCbMgr()->m_pCBFog, 4);
 	_mgr->SetConstantBuffer(_mgr->GetCbMgr()->m_pCBScreenSize, 5);
+	_mgr->SetConstantBuffer(_mgr->GetCbMgr()->m_pCBBonePalette, 6);
 
 	Tracenf("D3D11Renderer: Initialization complete");
 	return true;
@@ -152,10 +153,6 @@ ED3D11VertexFormat CD3D11Renderer::DetectVertexFormat(DWORD dwFVF)
 	bool hasDiffuse = (dwFVF & D3DFVF_DIFFUSE) != 0;
 	int texCount = (dwFVF & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT;
 
-	if (hasNormal && texCount >= 2)
-		return VF_PNT2;
-	if (hasNormal && texCount >= 1)
-		return VF_PNT;
 	if (hasNormal)
 		return VF_PN;
 	if (hasDiffuse && texCount >= 2)

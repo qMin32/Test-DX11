@@ -30,3 +30,10 @@ Cleaning up unnecessary code.
 //////////////// remove EterImageLib ////////////////
 Cleaning up unnecessary code.
 /////////////////////////////             /////////////////////////////
+
+
+//////////////// Add D3D_SHADER_MACRO ////////////////
+With D3D_SHADER_MACRO send define from c++ to shader.
+Now instead of PNT_Vs, PNT2_Vs, PNT_Skinned_Vs, PNT2_Skinned_Vs we only have Mesh_Vs.
+Now instead of PNT_Ps, PNT2_Ps we have Mesh_Ps.
+/////////////////////////////             /////////////////////////////

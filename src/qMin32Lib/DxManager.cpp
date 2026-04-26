@@ -21,12 +21,14 @@ CBManagerPtr DxManager::GetCbMgr()
 	return m_cbManager;
 }
 
-void DxManager::SetShader(ED3D11VertexFormat format)
+void DxManager::SetShader(ED3D11VertexFormat format, uint32_t flags)
 {
-	if (format >= VF_COUNT || !m_shaderContainer)
-		return;
+	ShaderPtr shader = m_shaderContainer->GetShader(format, flags);
 
-	SetShader(m_shaderContainer->GetShader(format));
+	if ((!shader || !shader->IsValid()) && flags != SHADER_NONE)
+		shader = m_shaderContainer->GetShader(format, SHADER_NONE);
+
+	SetShader(shader);
 }
 
 void DxManager::CreateConstantBuffer(CBufferPtr& outBuffer, UINT dataSize)
@@ -70,9 +72,9 @@ void DxManager::SetVertexBuffer(const VBufferPtr& buffer, UINT stride)
 	STATEMANAGER.SetStreamSource(0, buffer ? buffer->m_buffer.Get() : nullptr, finalStride);
 }
 
-void DxManager::CreateShader(ShaderPtr& outShader, const std::string& vsName, const std::string& psName)
+void DxManager::CreateShader(ShaderPtr& outShader, const std::string& vsName, const std::string& psName, uint32_t shaderFlags)
 {
-	outShader = std::make_shared<CShaders>(m_device, vsName, psName);
+	outShader = std::make_shared<CShaders>(m_device, vsName, psName, shaderFlags);
 }
 
 void DxManager::SetShader(const ShaderPtr& shader)

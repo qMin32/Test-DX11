@@ -9,14 +9,15 @@
 #pragma comment(lib, "d3dcompiler.lib")
 #include "ShadersHelper.h"
 
-CShaders::CShaders(ID3D11Device* device, const std::string& vsName, const std::string& psName)
-	: m_device(device), m_vsName(vsName), m_psName(psName)
+CShaders::CShaders(ID3D11Device* device, const std::string& vsName, const std::string& psName, uint32_t shaderFlags)
+	: m_device(device), m_vsName(vsName), m_psName(psName), m_shaderFlags(shaderFlags)
 {
 	if (!m_vsName.empty())
-		LoadVertexShader(m_device, m_vsName, "vs_5_0", m_vs, m_inputLayout);
+		LoadVertexShader(m_device, m_vsName, "vs_5_0", m_vs, m_inputLayout, m_shaderFlags);
 
 	if (!m_psName.empty())
-		LoadPixelShader(m_device, m_psName, "ps_5_0", m_ps);
+		LoadPixelShader(m_device, m_psName, "ps_5_0", m_ps, m_shaderFlags);
+
 #ifdef CECK_ERRORS
 	if (!m_vs)
 		WriteShaderError("VS FAILED: " + m_vsName);
@@ -25,6 +26,7 @@ CShaders::CShaders(ID3D11Device* device, const std::string& vsName, const std::s
 	if (!m_inputLayout)
 		WriteShaderError("INPUT LAYOUT FAILED: " + m_vsName);
 #endif
+
 #ifdef _DEBUG
 	StartWatcher();
 #endif
@@ -81,14 +83,14 @@ void CShaders::Set(ID3D11DeviceContext* context) const
 	context->PSSetShader(m_ps.Get(), nullptr, 0);
 }
 
-
 void CShaders::Reload()
 {
 	if (!m_vsName.empty())
-		LoadVertexShader(m_device, m_vsName, "vs_5_0", m_vs, m_inputLayout);
+		LoadVertexShader(m_device, m_vsName, "vs_5_0", m_vs, m_inputLayout, m_shaderFlags);
 
 	if (!m_psName.empty())
-		LoadPixelShader(m_device, m_psName, "ps_5_0", m_ps);
+		LoadPixelShader(m_device, m_psName, "ps_5_0", m_ps, m_shaderFlags);
+
 #ifdef CECK_ERRORS
 	WriteShaderError("Reloaded: " + m_vsName + " / " + m_psName);
 #endif

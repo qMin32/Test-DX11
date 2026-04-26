@@ -71,3 +71,8 @@ float4 ResolveArg(int arg, float4 tex, float4 diffuse)
 	if (arg == 2) return tex;
 	return diffuse;  // DIFFUSE(0) or CURRENT(1)
 }
+
+cbuffer GrannyBonePalette : register(b6)
+{
+    row_major float4x4 bonePalette[256];
+};

@@ -80,6 +80,15 @@ struct CBScreenSize
 	float pad1;
 };
 
+#ifndef GRANNY_DX11_MAX_BONES
+#define GRANNY_DX11_MAX_BONES 256
+#endif
+
+struct SGrannyBonePalette
+{
+	DirectX::XMFLOAT4X4 Bone[GRANNY_DX11_MAX_BONES];
+};
+
 class CBManager
 {
 public:
@@ -116,6 +125,9 @@ public:
 
 	void SetScreenSize(float width, float height);
 
+	//bone mesh
+	bool UploadBonePalette(const DirectX::XMFLOAT4X4* bones, unsigned int count);
+
 private:
 	CBufferPtr				m_pCBPerFrame;
 	CBufferPtr				m_pCBMaterial;
@@ -123,7 +135,7 @@ private:
 	CBufferPtr				m_pCBTexTransform;
 	CBufferPtr				m_pCBFog;
 	CBufferPtr				m_pCBScreenSize;
-
+	CBufferPtr				m_pCBBonePalette;
 
 	CBPerFrame				m_cbPerFrame = {};
 	CBMaterial				m_cbMaterial = {};

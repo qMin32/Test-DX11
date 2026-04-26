@@ -14,7 +14,7 @@ class CDungeonModelInstance : public CGrannyModelInstance
 			if (IsEmpty())
 				return;
 
-			_mgr->SetShader(VF_PNT2);
+			_mgr->SetShader(VF_MESH, HAS_TEX2);
 			auto lpd3dRigidPNTVtxBuf = m_pModel->GetVertexBuffer();
 			if (lpd3dRigidPNTVtxBuf)
 			{
@@ -36,7 +36,7 @@ class CDungeonModelInstance : public CGrannyModelInstance
 			STATEMANAGER.SaveRenderState(RS11_SRCBLEND, D3D11_BLEND_ZERO);
 			STATEMANAGER.SaveRenderState(RS11_DESTBLEND, D3D11_BLEND_SRC_COLOR);
 
-			_mgr->SetShader(VF_PNT2);
+			_mgr->SetShader(VF_MESH, HAS_TEX2);
 			auto lpd3dRigidPNTVtxBuf = m_pModel->GetVertexBuffer();
 			if (lpd3dRigidPNTVtxBuf)
 			{

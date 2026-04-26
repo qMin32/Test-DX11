@@ -33,13 +33,14 @@ template <typename T> using UniquePtr = std::unique_ptr<T>;
 enum ED3D11VertexFormat
 {
 	VF_PDT,		// Position + Diffuse + TexCoord
-	VF_PNT,		// Position + Normal + TexCoord
+	VF_MESH,	//Position + Normal + TexCoord / + TexCoord2
 	VF_PD,		// Position + Diffuse
-	VF_PNT2,	// Position + Normal + TexCoord + TexCoord2
 	VF_PN,		// Position + Normal only (terrain HTP)
 	VF_SCREEN,	// Pre-transformed: XYZRHW + Diffuse + Specular + Tex2
 	VF_PT,		// Position + TexCoord (effects, snow, minimap)
 	VF_PDT2,	// Position + Diffuse + TexCoord + TexCoord2 (SpeedTree branches/fronds)
+	
+	VF_SKYBOX,
 
 	VF_COUNT
 };

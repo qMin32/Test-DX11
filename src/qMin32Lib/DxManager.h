@@ -1,6 +1,7 @@
 #pragma once
 #include "Core.h"
 #include <string>
+#include "ShadersHelper.h"
 
 class DxManager
 {
@@ -8,8 +9,11 @@ public:
 	DxManager(ID3D11Device* device, ID3D11DeviceContext* context);
 
 	CBManagerPtr GetCbMgr();
+	ID3D11Device* GetDevice() { return m_device; }
+	ID3D11DeviceContext* GetDeviceContext() { return m_context; }
 
-	void SetShader(ED3D11VertexFormat format);
+	void SetShader(ED3D11VertexFormat format, uint32_t flags = SHADER_NONE);
+
 
 	void CreateConstantBuffer(CBufferPtr& outBuffer, UINT dataSize);
 	void SetConstantBuffer(const CBufferPtr& buffer, UINT slotIndex);
@@ -21,7 +25,7 @@ public:
 	void SetVertexBuffer(const VBufferPtr& buffer, UINT stride = 0);
 
 private:
-	void CreateShader(ShaderPtr& outShader, const std::string& vsName, const std::string& psName);
+	void CreateShader(ShaderPtr& outShader, const std::string& vsName, const std::string& psName, uint32_t shaderFlags = SHADER_NONE);
 	void SetShader(const ShaderPtr& shader);
 
 private:

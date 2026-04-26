@@ -3,7 +3,8 @@
 #include "ModelInstance.h"
 #include "Model.h"
 #include "qMin32Lib/All.h"
-#include "GrannySkinning.h"
+#include <qMin32Lib/ConstantBufferManager.h>
+#include <algorithm>
 
 #ifdef _TEST
 
@@ -60,14 +61,14 @@ void CGrannyModelInstance::RenderWithOneTexture()
 
 	if (skinnedVB)
 	{
-		GrannySkinning_BindPNT(true);
+		_mgr->SetShader(VF_MESH, IS_SKINNED);
 		_mgr->SetVertexBuffer(skinnedVB, m_pModel->GetSkinnedVertexStride());
 		RenderMeshNodeListWithOneTexture(CGrannyMesh::TYPE_DEFORM, CGrannyMaterial::TYPE_DIFFUSE_PNT);
 	}
 
-	_mgr->SetShader(VF_PNT);
 	if (rigidVB)
 	{
+		_mgr->SetShader(VF_MESH);
 		_mgr->SetVertexBuffer(rigidVB, sizeof(TPNTVertex));
 		RenderMeshNodeListWithOneTexture(CGrannyMesh::TYPE_RIGID, CGrannyMaterial::TYPE_DIFFUSE_PNT);
 	}
@@ -83,14 +84,14 @@ void CGrannyModelInstance::BlendRenderWithOneTexture()
 
 	if (skinnedVB)
 	{
-		GrannySkinning_BindPNT(true);
+		_mgr->SetShader(VF_MESH, IS_SKINNED);
 		_mgr->SetVertexBuffer(skinnedVB, m_pModel->GetSkinnedVertexStride());
 		RenderMeshNodeListWithOneTexture(CGrannyMesh::TYPE_DEFORM, CGrannyMaterial::TYPE_BLEND_PNT);
 	}
 
-	_mgr->SetShader(VF_PNT);
 	if (rigidVB)
 	{
+		_mgr->SetShader(VF_MESH);
 		_mgr->SetVertexBuffer(rigidVB, sizeof(TPNTVertex));
 		RenderMeshNodeListWithOneTexture(CGrannyMesh::TYPE_RIGID, CGrannyMaterial::TYPE_BLEND_PNT);
 	}
@@ -106,14 +107,14 @@ void CGrannyModelInstance::RenderWithTwoTexture()
 
 	if (skinnedVB)
 	{
-		GrannySkinning_BindPNT2(true);
+		_mgr->SetShader(VF_MESH, HAS_TEX2 | IS_SKINNED);
 		_mgr->SetVertexBuffer(skinnedVB, m_pModel->GetSkinnedVertexStride());
 		RenderMeshNodeListWithTwoTexture(CGrannyMesh::TYPE_DEFORM, CGrannyMaterial::TYPE_DIFFUSE_PNT);
 	}
 
-	_mgr->SetShader(VF_PNT2);
 	if (rigidVB)
 	{
+		_mgr->SetShader(VF_MESH, HAS_TEX2);
 		_mgr->SetVertexBuffer(rigidVB, sizeof(TPNT2Vertex));
 		RenderMeshNodeListWithTwoTexture(CGrannyMesh::TYPE_RIGID, CGrannyMaterial::TYPE_DIFFUSE_PNT);
 	}
@@ -129,14 +130,14 @@ void CGrannyModelInstance::BlendRenderWithTwoTexture()
 
 	if (skinnedVB)
 	{
-		GrannySkinning_BindPNT2(true);
+		_mgr->SetShader(VF_MESH, HAS_TEX2 | IS_SKINNED);
 		_mgr->SetVertexBuffer(skinnedVB, m_pModel->GetSkinnedVertexStride());
 		RenderMeshNodeListWithTwoTexture(CGrannyMesh::TYPE_DEFORM, CGrannyMaterial::TYPE_BLEND_PNT);
 	}
 
-	_mgr->SetShader(VF_PNT2);
 	if (rigidVB)
 	{
+		_mgr->SetShader(VF_MESH, HAS_TEX2);
 		_mgr->SetVertexBuffer(rigidVB, sizeof(TPNT2Vertex));
 		RenderMeshNodeListWithTwoTexture(CGrannyMesh::TYPE_RIGID, CGrannyMaterial::TYPE_BLEND_PNT);
 	}
@@ -155,15 +156,15 @@ void CGrannyModelInstance::RenderWithoutTexture()
 
 	if (skinnedVB)
 	{
-		GrannySkinning_BindPNT(true);
+		_mgr->SetShader(VF_MESH, IS_SKINNED);
 		_mgr->SetVertexBuffer(skinnedVB, m_pModel->GetSkinnedVertexStride());
 		RenderMeshNodeListWithoutTexture(CGrannyMesh::TYPE_DEFORM, CGrannyMaterial::TYPE_DIFFUSE_PNT);
 		RenderMeshNodeListWithoutTexture(CGrannyMesh::TYPE_DEFORM, CGrannyMaterial::TYPE_BLEND_PNT);
 	}
 
-	_mgr->SetShader(VF_PNT);
 	if (rigidVB)
 	{
+		_mgr->SetShader(VF_MESH);
 		_mgr->SetVertexBuffer(rigidVB, sizeof(TPNTVertex));
 		RenderMeshNodeListWithoutTexture(CGrannyMesh::TYPE_RIGID, CGrannyMaterial::TYPE_DIFFUSE_PNT);
 		RenderMeshNodeListWithoutTexture(CGrannyMesh::TYPE_RIGID, CGrannyMaterial::TYPE_BLEND_PNT);
@@ -196,7 +197,7 @@ bool CGrannyModelInstance::UploadMeshBonePaletteToShader(int iMesh)
 		memcpy(&palette[i], &m, sizeof(DirectX::XMFLOAT4X4));
 	}
 
-	return GrannySkinning_UploadBonePalette(palette, count);
+	return _mgr->GetCbMgr()->UploadBonePalette(palette, count);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

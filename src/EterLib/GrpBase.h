@@ -313,6 +313,7 @@ class CGraphicBase
 		static VBufferPtr		ms_alpd3dPDTVB[PDT_VERTEXBUFFER_NUM];
 		static IBufferPtr		ms_alpd3dDefIB[DEFAULT_IB_NUM];
 		static UniquePtr<DxManager> 			m_mgr;
+		friend class CSpeedTreeForest;
 };
 
 #define _mgr (CGraphicBase::GetDxManager())

@@ -2,7 +2,6 @@
 #include "ModelInstance.h"
 #include "Model.h"
 #include "qMin32Lib/DxManager.h"
-#include "GrannySkinning.h"
 
 void CGrannyModelInstance::Clear()
 {

@@ -11,6 +11,7 @@ CBManager::CBManager(DxManager* manager)
 	manager->CreateConstantBuffer(m_pCBTexTransform, sizeof(CBTexTransform));
 	manager->CreateConstantBuffer(m_pCBFog, sizeof(CBFog));
 	manager->CreateConstantBuffer(m_pCBScreenSize, sizeof(CBScreenSize));
+	manager->CreateConstantBuffer(m_pCBBonePalette, sizeof(SGrannyBonePalette)); // b8
 }
 
 void CBManager::SetWorldMatrix(const D3DXMATRIX& mat)
@@ -208,4 +209,21 @@ void CBManager::SetScreenSize(float width, float height)
 	m_cbScreenSize.screenHeight = height;
 
 	m_pCBScreenSize->Update(m_cbScreenSize);
+}
+
+bool CBManager::UploadBonePalette(const DirectX::XMFLOAT4X4* bones, unsigned int count)
+{
+	if (!bones || !m_pCBBonePalette)
+		return false;
+
+	if (count > GRANNY_DX11_MAX_BONES)
+		count = GRANNY_DX11_MAX_BONES;
+
+	SGrannyBonePalette palette = {};
+	memcpy(palette.Bone, bones, sizeof(DirectX::XMFLOAT4X4) * count);
+
+	if (!m_pCBBonePalette->Update(palette))
+		return false;
+
+	return true;
 }
