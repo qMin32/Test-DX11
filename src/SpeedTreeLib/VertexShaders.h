@@ -1,168 +1,287 @@
-///////////////////////////////////////////////////////////////////////  
-//	SpeedTreeRT DirectX Example
-//
-//	(c) 2003 IDV, Inc.
-//
-//	This example demonstrates how to render trees using SpeedTreeRT
-//	and DirectX.  Techniques illustrated include ".spt" file parsing,
-//	static lighting, dynamic lighting, LOD implementation, cloning,
-//	instancing, and dynamic wind effects.
-//
-//
-//	*** INTERACTIVE DATA VISUALIZATION (IDV) PROPRIETARY INFORMATION ***
-//
-//	This software is supplied under the terms of a license agreement or
-//	nondisclosure agreement with Interactive Data Visualization and may
-//	not be copied or disclosed except in accordance with the terms of
-//	that agreement.
-//
-//      Copyright (c) 2001-2003 IDV, Inc.
-//      All Rights Reserved.
-//
-//		IDV, Inc.
-//		1233 Washington St. Suite 610
-//		Columbia, SC 29201
-//		Voice: (803) 799-1699
-//		Fax:   (803) 931-0320
-//		Web:   http://www.idvinc.com
-
-///////////////////////////////////////////////////////////////////////  
-//	Includes
-
 #pragma once
 #include "SpeedTreeConfig.h"
-#include "EterLib/StandaloneVertexDeclaration.h"
-#include <map>
-#include <string>
 #include "EterLib/D3D9Compat.h"
 #include "EterLib/D3DXMathCompat.h"
+#include "qMin32Lib/DxManager.h"
+#include "EterBase/Debug.h"
 
-///////////////////////////////////////////////////////////////////////  
-//	Branch & Frond Vertex Formats
+#include <d3d11.h>
+#include <d3dcompiler.h>
+#include <wrl/client.h>
+#include <memory>
+#include <cstdint>
 
-static DWORD D3DFVF_SPEEDTREE_BRANCH_VERTEX =
-		D3DFVF_XYZ |							// always have the position
-	#ifdef WRAPPER_USE_DYNAMIC_LIGHTING			// precomputed colors or geometric normals
-		D3DFVF_NORMAL |
-	#else
-		D3DFVF_DIFFUSE |
-	#endif
-	#ifdef WRAPPER_RENDER_SELF_SHADOWS
-		D3DFVF_TEX2 | D3DFVF_TEXCOORDSIZE2(0) | D3DFVF_TEXCOORDSIZE2(1) // shadow texture coordinates
-	#else
-		D3DFVF_TEX1 | D3DFVF_TEXCOORDSIZE2(0)	// always have first texture layer coords
-	#endif
-	#ifdef WRAPPER_USE_GPU_WIND					
-		| D3DFVF_TEX3 | D3DFVF_TEXCOORDSIZE2(2)	// GPU Only - wind weight and index passed in second texture layer
-	#endif
-		;
+#pragma comment(lib, "d3dcompiler.lib")
 
-/////////////////////////////////////////////////////////////////////// 
-// FVF Branch Vertex Structure
+#include "EterLib/GrpBase.h"
 
 struct SFVFBranchVertex
 {
-	D3DXVECTOR3		m_vPosition;			// Always Used							
-#ifdef WRAPPER_USE_DYNAMIC_LIGHTING			
-	D3DXVECTOR3		m_vNormal;				// Dynamic Lighting Only			
-#else										     
-	DWORD			m_dwDiffuseColor;		// Static Lighting Only	
-#endif	
-	FLOAT			m_fTexCoords[2];		// Always Used
-#ifdef WRAPPER_RENDER_SELF_SHADOWS
-	FLOAT			m_fShadowCoords[2];		// Texture coordinates for the shadows
+	D3DXVECTOR3 m_vPosition;
+#ifdef WRAPPER_USE_DYNAMIC_LIGHTING
+	D3DXVECTOR3 m_vNormal;
+#else
+	DWORD m_dwDiffuseColor;
 #endif
-#ifdef WRAPPER_USE_GPU_WIND		
-	FLOAT			m_fWindIndex;			// GPU Only
-	FLOAT			m_fWindWeight;			
+	FLOAT m_fTexCoords[2];
+#ifdef WRAPPER_RENDER_SELF_SHADOWS
+	FLOAT m_fShadowCoords[2];
+#endif
+#ifdef WRAPPER_USE_GPU_WIND
+	FLOAT m_fWindIndex;
+	FLOAT m_fWindWeight;
 #endif
 };
-
-
-///////////////////////////////////////////////////////////////////////
-//	LoadBranchShader
-
-static LPDIRECT3DVERTEXDECLARATION9 LoadBranchShader(LPDIRECT3DDEVICE9 pDx)
-{
-	D3DVERTEXELEMENT9 pBranchShaderDecl[] = {
-		{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
-		{ 0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0 },
-		{ 0, 16, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0 },
-		{ 0, 24, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 1 },
-		D3DDECL_END()
-	};
-
-	return CreateStandaloneVertexDeclaration(pBranchShaderDecl);
-}
-
-///////////////////////////////////////////////////////////////////////  
-//	Leaf Vertex Formats
-
-static DWORD D3DFVF_SPEEDTREE_LEAF_VERTEX =
-		D3DFVF_XYZ |							// always have the position
-	#ifdef WRAPPER_USE_DYNAMIC_LIGHTING			// precomputed colors or geometric normals
-		D3DFVF_NORMAL |
-	#else
-		D3DFVF_DIFFUSE |
-	#endif
-		D3DFVF_TEX1 | D3DFVF_TEXCOORDSIZE2(0)	// always have first texture layer coords
-	#if defined WRAPPER_USE_GPU_WIND || defined WRAPPER_USE_GPU_LEAF_PLACEMENT					
-		| D3DFVF_TEX3 | D3DFVF_TEXCOORDSIZE4(2)	// GPU Only - wind weight and index passed in second texture layer
-	#endif
-		;
-
-
-/////////////////////////////////////////////////////////////////////// 
-// FVF Leaf Vertex Structure
 
 struct SFVFLeafVertex
 {
-		D3DXVECTOR3		m_vPosition;			// Always Used							
-	#ifdef WRAPPER_USE_DYNAMIC_LIGHTING			
-		D3DXVECTOR3		m_vNormal;				// Dynamic Lighting Only			
-	#else										     
-		DWORD			m_dwDiffuseColor;		// Static Lighting Only	
-	#endif											
-		FLOAT			m_fTexCoords[2];		// Always Used
-	#if defined WRAPPER_USE_GPU_WIND || defined WRAPPER_USE_GPU_LEAF_PLACEMENT
-		FLOAT			m_fWindIndex;			// Only used when GPU is involved
-		FLOAT			m_fWindWeight;					
-		FLOAT			m_fLeafPlacementIndex;
-		FLOAT			m_fLeafScalarValue;
-	#endif
+	D3DXVECTOR3 m_vPosition;
+#ifdef WRAPPER_USE_DYNAMIC_LIGHTING
+	D3DXVECTOR3 m_vNormal;
+#else
+	DWORD m_dwDiffuseColor;
+#endif
+	FLOAT m_fTexCoords[2];
+#if defined WRAPPER_USE_GPU_WIND || defined WRAPPER_USE_GPU_LEAF_PLACEMENT
+	FLOAT m_fWindIndex;
+	FLOAT m_fWindWeight;
+	FLOAT m_fLeafPlacementIndex;
+	FLOAT m_fLeafScalarValue;
+#endif
 };
 
-
-///////////////////////////////////////////////////////////////////////
-//	LoadLeafShader
-
-static void LoadLeafShader(LPDIRECT3DDEVICE9 pDx, LPDIRECT3DVERTEXDECLARATION9& pVertexDecl, LPDIRECT3DVERTEXSHADER9& pVertexShader)
+class CSpeedTreeShader
 {
-	const D3DVERTEXELEMENT9 leafVertexDecl[] = {
-			{ 0,  0, D3DDECLTYPE_FLOAT3,  D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,     0 },
-#ifdef WRAPPER_USE_DYNAMIC_LIGHTING
-			{ 0, 12, D3DDECLTYPE_FLOAT3,D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,			0 },
-			{ 0, 24, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,		0 },
-	#if defined WRAPPER_USE_GPU_WIND || defined WRAPPER_USE_GPU_LEAF_PLACEMENT
-			{ 0, 32, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,		2 },
-	#endif
-#else
-			{ 0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,		0 },
-			{ 0, 16, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,		0 },
-	#if defined WRAPPER_USE_GPU_WIND || defined WRAPPER_USE_GPU_LEAF_PLACEMENT
-			{ 0, 24, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,		2 },
-	#endif
+public:
+	bool Create(const char* vsEntry, const D3D11_INPUT_ELEMENT_DESC* layout, UINT layoutCount)
+	{
+		if (!_mgr || !_mgr->GetDevice())
+			return false;
+
+		Microsoft::WRL::ComPtr<ID3DBlob> vsBlob;
+		Microsoft::WRL::ComPtr<ID3DBlob> psBlob;
+		Microsoft::WRL::ComPtr<ID3DBlob> err;
+
+		UINT flags = D3DCOMPILE_ENABLE_STRICTNESS;
+#ifdef _DEBUG
+		flags |= D3DCOMPILE_DEBUG;
 #endif
-			D3DDECL_END()
+
+		HRESULT hr = D3DCompile(GetSource(), strlen(GetSource()), "SpeedTreeDX11", nullptr, nullptr, vsEntry, "vs_4_0", flags, 0, vsBlob.GetAddressOf(), err.GetAddressOf());
+		if (FAILED(hr))
+		{
+			TraceError("SpeedTree VS compile failed: %s", err ? (const char*)err->GetBufferPointer() : "unknown");
+			return false;
+		}
+
+		hr = D3DCompile(GetSource(), strlen(GetSource()), "SpeedTreeDX11", nullptr, nullptr, "PSMain", "ps_4_0", flags, 0, psBlob.GetAddressOf(), err.ReleaseAndGetAddressOf());
+		if (FAILED(hr))
+		{
+			TraceError("SpeedTree PS compile failed: %s", err ? (const char*)err->GetBufferPointer() : "unknown");
+			return false;
+		}
+
+		hr = _mgr->GetDevice()->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), nullptr, m_vs.GetAddressOf());
+		if (FAILED(hr))
+			return false;
+
+		hr = _mgr->GetDevice()->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(), nullptr, m_ps.GetAddressOf());
+		if (FAILED(hr))
+			return false;
+
+		hr = _mgr->GetDevice()->CreateInputLayout(layout, layoutCount, vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), m_layout.GetAddressOf());
+		return SUCCEEDED(hr);
+	}
+
+	void Set() const
+	{
+		if (!_mgr || !_mgr->GetDeviceContext())
+			return;
+
+		ID3D11DeviceContext* ctx = _mgr->GetDeviceContext();
+		ctx->IASetInputLayout(m_layout.Get());
+		ctx->VSSetShader(m_vs.Get(), nullptr, 0);
+		ctx->PSSetShader(m_ps.Get(), nullptr, 0);
+	}
+
+	bool IsValid() const { return m_vs && m_ps && m_layout; }
+
+private:
+	static const char* GetSource()
+	{
+		return R"(
+cbuffer CBPerFrame : register(b0)
+{
+	row_major float4x4 gWorld;
+	row_major float4x4 gView;
+	row_major float4x4 gProj;
+};
+
+cbuffer CBMaterial : register(b1)
+{
+	float4 gTextureFactor;
+	int gUseTexture0;
+	int gUseTexture1;
+	int gColorOp0;
+	int gAlphaOp0;
+	int gColorOp1;
+	int gAlphaOp1;
+	int gColorArg10;
+	int gColorArg20;
+	int gAlphaArg10;
+	int gAlphaArg20;
+	int gColorArg11;
+	int gColorArg21;
+	int gAlphaArg11;
+	int gAlphaArg21;
+	int gAlphaTestEnable;
+	int gAlphaRef;
+	int gTexCoordGen1;
+	int gPadMat1;
+	int gPadMat2;
+	int gPadMat3;
+};
+
+cbuffer CBSpeedTree : register(b7)
+{
+	float4x4 gSpeedTreeCompound;
+	float4 gTreePos;
+	float4 gSpeedTreeFog;
+	float4 gSpeedTreeLightDir;
+	float4 gSpeedTreeLightAmbient;
+	float4 gSpeedTreeLightDiffuse;
+	float4 gSpeedTreeMaterialDiffuse;
+	float4 gSpeedTreeMaterialAmbient;
+	float4 gLeafLightingAdjustment;
+	float4 gLeafTable[256];
+};
+
+Texture2D tex0 : register(t0);
+Texture2D tex1 : register(t1);
+SamplerState samp0 : register(s0);
+SamplerState samp1 : register(s1);
+
+struct VSInBranch
+{
+	float3 pos : POSITION;
+	float4 color : COLOR0;
+	float2 uv0 : TEXCOORD0;
+	float2 uv1 : TEXCOORD1;
+};
+
+struct VSInLeaf
+{
+	float3 pos : POSITION;
+	float4 color : COLOR0;
+	float2 uv0 : TEXCOORD0;
+	float4 leafData : TEXCOORD2;
+};
+
+struct VSOut
+{
+	float4 pos : SV_POSITION;
+	float4 color : COLOR0;
+	float2 uv0 : TEXCOORD0;
+	float2 uv1 : TEXCOORD1;
+	float fog : TEXCOORD2;
+};
+
+VSOut FinishVertex(float3 localPos, float4 color, float2 uv0, float2 uv1)
+{
+	VSOut o;
+	float4 worldPos = float4(localPos + gTreePos.xyz, 1.0f);
+	o.pos = mul(worldPos, gSpeedTreeCompound);
+	o.color = color;
+	o.uv0 = uv0;
+	o.uv1 = uv1;
+	float dist = mul(worldPos, gView).z;
+	o.fog = saturate((gSpeedTreeFog.y - dist) * gSpeedTreeFog.z);
+	return o;
+}
+
+VSOut VSBranch(VSInBranch v)
+{
+	return FinishVertex(v.pos, v.color, v.uv0, v.uv1);
+}
+
+VSOut VSLeaf(VSInLeaf v)
+{
+	float3 p = v.pos;
+	uint tableReg = (uint)(v.leafData.z + 0.5f);
+	uint tableIndex = tableReg >= 4 ? tableReg - 4 : 0;
+	if (tableIndex < 256)
+		p += gLeafTable[tableIndex].xyz * v.leafData.w;
+	return FinishVertex(p, v.color, v.uv0, float2(0.0f, 0.0f));
+}
+
+float4 PSMain(VSOut i) : SV_Target
+{
+	float4 texColor = (gUseTexture0 != 0) ? tex0.Sample(samp0, i.uv0) : float4(1.0f, 1.0f, 1.0f, 1.0f);
+	float4 baseColor = texColor * i.color;
+
+	if (gAlphaTestEnable != 0)
+	{
+		float alphaRef = (gAlphaRef > 1) ? ((float)gAlphaRef / 255.0f) : (float)gAlphaRef;
+		clip(baseColor.a - alphaRef);
+	}
+
+	return baseColor;
+}
+)";
+	}
+
+private:
+	Microsoft::WRL::ComPtr<ID3D11VertexShader> m_vs;
+	Microsoft::WRL::ComPtr<ID3D11PixelShader> m_ps;
+	Microsoft::WRL::ComPtr<ID3D11InputLayout> m_layout;
+};
+
+using SpeedTreeShaderPtr = std::shared_ptr<CSpeedTreeShader>;
+
+static SpeedTreeShaderPtr LoadBranchShader()
+{
+	D3D11_INPUT_ELEMENT_DESC desc[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+#ifdef WRAPPER_USE_DYNAMIC_LIGHTING
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+#else
+		{ "COLOR", 0, DXGI_FORMAT_B8G8R8A8_UNORM, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+#endif
 	};
 
-	LPDIRECT3DVERTEXDECLARATION9 pNewVertexDecl = CreateStandaloneVertexDeclaration(leafVertexDecl);
+	SpeedTreeShaderPtr shader = std::make_shared<CSpeedTreeShader>();
+	if (!shader->Create("VSBranch", desc, _countof(desc)))
+		shader.reset();
+	return shader;
+}
 
-	// D3D9 vertex shader not available — leaf rendering uses D3D11 pipeline now
-	LPDIRECT3DVERTEXSHADER9 pNewVertexShader = NULL;
+static SpeedTreeShaderPtr LoadLeafShader()
+{
+	D3D11_INPUT_ELEMENT_DESC desc[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+#ifdef WRAPPER_USE_DYNAMIC_LIGHTING
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+#if defined WRAPPER_USE_GPU_WIND || defined WRAPPER_USE_GPU_LEAF_PLACEMENT
+		{ "TEXCOORD", 2, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+#endif
+#else
+		{ "COLOR", 0, DXGI_FORMAT_B8G8R8A8_UNORM, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+#if defined WRAPPER_USE_GPU_WIND || defined WRAPPER_USE_GPU_LEAF_PLACEMENT
+		{ "TEXCOORD", 2, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+#endif
+#endif
+	};
 
-	if (pVertexDecl)
-		pVertexDecl->Release();
-	pVertexDecl = pNewVertexDecl;
-	pVertexShader = pNewVertexShader;
+	SpeedTreeShaderPtr shader = std::make_shared<CSpeedTreeShader>();
+	if (!shader->Create("VSLeaf", desc, _countof(desc)))
+		shader.reset();
+	return shader;
 }

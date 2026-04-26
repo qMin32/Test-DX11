@@ -80,6 +80,24 @@ struct CBScreenSize
 	float pad1;
 };
 
+#ifndef SPEEDTREE_MAX_LEAF_TABLE_FLOAT4
+#define SPEEDTREE_MAX_LEAF_TABLE_FLOAT4 256
+#endif
+
+struct CBSpeedTree
+{
+	D3DXMATRIX matCompound;
+	float treePos[4];
+	float fog[4];
+	float lightDir[4];
+	float lightAmbient[4];
+	float lightDiffuse[4];
+	float materialDiffuse[4];
+	float materialAmbient[4];
+	float leafLightingAdjustment[4];
+	float leafTable[SPEEDTREE_MAX_LEAF_TABLE_FLOAT4][4];
+};
+
 #ifndef GRANNY_DX11_MAX_BONES
 #define GRANNY_DX11_MAX_BONES 256
 #endif
@@ -125,6 +143,14 @@ public:
 
 	void SetScreenSize(float width, float height);
 
+	void SetSpeedTreeCompoundMatrix(const D3DXMATRIX& mat);
+	void SetSpeedTreeTreePosition(const D3DXVECTOR4& pos);
+	void SetSpeedTreeFog(const float* fog);
+	void SetSpeedTreeLight(const float* light);
+	void SetSpeedTreeMaterialConstants(const float* material, float leafLightingAdjustment);
+	void SetSpeedTreeLeafTables(const float* table, UINT float4Count);
+	void FlushSpeedTree();
+
 	//bone mesh
 	bool UploadBonePalette(const DirectX::XMFLOAT4X4* bones, unsigned int count);
 
@@ -136,6 +162,7 @@ private:
 	CBufferPtr				m_pCBFog;
 	CBufferPtr				m_pCBScreenSize;
 	CBufferPtr				m_pCBBonePalette;
+	CBufferPtr				m_pCBSpeedTree;
 
 	CBPerFrame				m_cbPerFrame = {};
 	CBMaterial				m_cbMaterial = {};
@@ -143,11 +170,13 @@ private:
 	CBTexTransform			m_cbTexTransform = {};
 	CBFog					m_cbFog = {};
 	CBScreenSize			m_cbScreenSize = {};
+	CBSpeedTree				m_cbSpeedTree = {};
 
 	bool					m_bTransformDirty = true;
 	bool					m_bMaterialDirty = true;
 	bool					m_bLightingDirty = true;
 	bool					m_bFogDirty = true;
+	bool					m_bSpeedTreeDirty = true;
 
 
 

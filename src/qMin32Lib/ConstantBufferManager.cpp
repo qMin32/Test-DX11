@@ -11,7 +11,8 @@ CBManager::CBManager(DxManager* manager)
 	manager->CreateConstantBuffer(m_pCBTexTransform, sizeof(CBTexTransform));
 	manager->CreateConstantBuffer(m_pCBFog, sizeof(CBFog));
 	manager->CreateConstantBuffer(m_pCBScreenSize, sizeof(CBScreenSize));
-	manager->CreateConstantBuffer(m_pCBBonePalette, sizeof(SGrannyBonePalette)); // b8
+	manager->CreateConstantBuffer(m_pCBBonePalette, sizeof(SGrannyBonePalette)); // b6
+	manager->CreateConstantBuffer(m_pCBSpeedTree, sizeof(CBSpeedTree)); // b7
 }
 
 void CBManager::SetWorldMatrix(const D3DXMATRIX& mat)
@@ -117,10 +118,10 @@ void CBManager::FlushLighting()
 	m_bLightingDirty = false;
 }
 
-void CBManager::SetFogEnable(BOOL bEnable) 
+void CBManager::SetFogEnable(BOOL bEnable)
 {
 	m_cbFog.fogEnable = bEnable ? 1 : 0;
-	m_bFogDirty = true; 
+	m_bFogDirty = true;
 }
 void CBManager::SetFogColor(DWORD dwColor)
 {
@@ -131,14 +132,14 @@ void CBManager::SetFogColor(DWORD dwColor)
 	m_bFogDirty = true;
 }
 void CBManager::SetFogStart(float fStart)
-{ 
+{
 	m_cbFog.fogStart = fStart;
 	m_bFogDirty = true;
 }
-void CBManager::SetFogEnd(float fEnd) 
-{ 
+void CBManager::SetFogEnd(float fEnd)
+{
 	m_cbFog.fogEnd = fEnd;
-	m_bFogDirty = true; 
+	m_bFogDirty = true;
 }
 
 void CBManager::FlushFog()
@@ -226,4 +227,75 @@ bool CBManager::UploadBonePalette(const DirectX::XMFLOAT4X4* bones, unsigned int
 		return false;
 
 	return true;
+}
+
+
+void CBManager::SetSpeedTreeCompoundMatrix(const D3DXMATRIX& mat)
+{
+	m_cbSpeedTree.matCompound = mat;
+	m_bSpeedTreeDirty = true;
+}
+
+void CBManager::SetSpeedTreeTreePosition(const D3DXVECTOR4& pos)
+{
+	m_cbSpeedTree.treePos[0] = pos.x;
+	m_cbSpeedTree.treePos[1] = pos.y;
+	m_cbSpeedTree.treePos[2] = pos.z;
+	m_cbSpeedTree.treePos[3] = pos.w;
+	m_bSpeedTreeDirty = true;
+}
+
+void CBManager::SetSpeedTreeFog(const float* fog)
+{
+	if (!fog)
+		return;
+	memcpy(m_cbSpeedTree.fog, fog, sizeof(float) * 4);
+	m_bSpeedTreeDirty = true;
+}
+
+void CBManager::SetSpeedTreeLight(const float* light)
+{
+	if (!light)
+		return;
+	memcpy(m_cbSpeedTree.lightDir, light + 0, sizeof(float) * 4);
+	memcpy(m_cbSpeedTree.lightAmbient, light + 4, sizeof(float) * 4);
+	memcpy(m_cbSpeedTree.lightDiffuse, light + 8, sizeof(float) * 4);
+	m_bSpeedTreeDirty = true;
+}
+
+void CBManager::SetSpeedTreeMaterialConstants(const float* material, float leafLightingAdjustment)
+{
+	if (!material)
+		return;
+	m_cbSpeedTree.materialDiffuse[0] = material[0];
+	m_cbSpeedTree.materialDiffuse[1] = material[1];
+	m_cbSpeedTree.materialDiffuse[2] = material[2];
+	m_cbSpeedTree.materialDiffuse[3] = 1.0f;
+	m_cbSpeedTree.materialAmbient[0] = material[3];
+	m_cbSpeedTree.materialAmbient[1] = material[4];
+	m_cbSpeedTree.materialAmbient[2] = material[5];
+	m_cbSpeedTree.materialAmbient[3] = 1.0f;
+	m_cbSpeedTree.leafLightingAdjustment[0] = leafLightingAdjustment;
+	m_cbSpeedTree.leafLightingAdjustment[1] = 0.0f;
+	m_cbSpeedTree.leafLightingAdjustment[2] = 0.0f;
+	m_cbSpeedTree.leafLightingAdjustment[3] = 0.0f;
+	m_bSpeedTreeDirty = true;
+}
+
+void CBManager::SetSpeedTreeLeafTables(const float* table, UINT float4Count)
+{
+	if (!table || float4Count == 0)
+		return;
+	if (float4Count > SPEEDTREE_MAX_LEAF_TABLE_FLOAT4)
+		float4Count = SPEEDTREE_MAX_LEAF_TABLE_FLOAT4;
+	memcpy(m_cbSpeedTree.leafTable, table, float4Count * sizeof(float) * 4);
+	m_bSpeedTreeDirty = true;
+}
+
+void CBManager::FlushSpeedTree()
+{
+	if (!m_bSpeedTreeDirty)
+		return;
+	m_pCBSpeedTree->Update(m_cbSpeedTree);
+	m_bSpeedTreeDirty = false;
 }

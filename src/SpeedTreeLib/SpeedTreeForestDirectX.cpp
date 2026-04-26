@@ -1,37 +1,4 @@
-///////////////////////////////////////////////////////////////////////  
-//	CSpeedTreeForestDirectX Class
-//
-//	(c) 2003 IDV, Inc.
-//
-//	This class is provided to illustrate one way to incorporate
-//	SpeedTreeRT into an OpenGL application.  All of the SpeedTreeRT
-//	calls that must be made on a per tree basis are done by this class.
-//	Calls that apply to all trees (i.e. static SpeedTreeRT functions)
-//	are made in the functions in main.cpp.
-//
-//
-//	*** INTERACTIVE DATA VISUALIZATION (IDV) PROPRIETARY INFORMATION ***
-//
-//	This software is supplied under the terms of a license agreement or
-//	nondisclosure agreement with Interactive Data Visualization and may
-//	not be copied or disclosed except in accordance with the terms of
-//	that agreement.
-//
-//      Copyright (c) 2001-2003 IDV, Inc.
-//      All Rights Reserved.
-//
-//		IDV, Inc.
-//		1233 Washington St. Suite 610
-//		Columbia, SC 29201
-//		Voice: (803) 799-1699
-//		Fax:   (803) 931-0320
-//		Web:   http://www.idvinc.com
-
 #include "StdAfx.h"
-
-#include <stdio.h>
-#include "EterLib/D3D9Compat.h"
-#include "EterLib/D3DXMathCompat.h"
 
 #include "EterBase/Timer.h"
 #include "EterLib/StateManager.h"
@@ -40,46 +7,37 @@
 #include "SpeedTreeForestDirectX.h"
 #include "SpeedTreeConfig.h"
 #include "VertexShaders.h"
+#include "qMin32Lib/ConstantBufferManager.h"
+#include "qMin32Lib/DxManager.h"
+//
 
-///////////////////////////////////////////////////////////////////////  
-//	CSpeedTreeForestDirectX::CSpeedTreeForestDirectX
-
-CSpeedTreeForestDirectX::CSpeedTreeForestDirectX()  : m_dwBranchVertexShader(nullptr), m_pLeafVertexShaderDecl(nullptr), m_pLeafVertexShader(nullptr)
+CSpeedTreeForestDirectX::CSpeedTreeForestDirectX()
+	: m_pDx(nullptr)
 {
 }
-
-
-///////////////////////////////////////////////////////////////////////  
-//	CSpeedTreeForestDirectX::~CSpeedTreeForestDirectX
 
 CSpeedTreeForestDirectX::~CSpeedTreeForestDirectX()
 {
 }
 
-
-///////////////////////////////////////////////////////////////////////  
-//	CSpeedTreeForestDirectX::InitVertexShaders
-bool CSpeedTreeForestDirectX::InitVertexShaders(void)
+bool CSpeedTreeForestDirectX::InitVertexShaders()
 {
-	// load the vertex shaders
-	if (!m_dwBranchVertexShader)
-		m_dwBranchVertexShader = LoadBranchShader(m_pDx);
+	if (!m_pBranchShader)
+		m_pBranchShader = LoadBranchShader();
 
-	if (!m_pLeafVertexShaderDecl || !m_pLeafVertexShader)
-		LoadLeafShader(m_pDx, m_pLeafVertexShaderDecl, m_pLeafVertexShader);
+	if (!m_pLeafShader)
+		m_pLeafShader = LoadLeafShader();
 
-	// D3D11: m_pLeafVertexShader is always NULL (no D3D9 vertex shaders). Only require
-	// the declaration and branch decl — the D3D11 pipeline handles actual shading via VF_PDT.
-	if (m_dwBranchVertexShader && m_pLeafVertexShaderDecl)
+	if (m_pBranchShader && m_pBranchShader->IsValid() && m_pLeafShader && m_pLeafShader->IsValid())
 	{
-		CSpeedTreeWrapper::SetVertexShaders(m_dwBranchVertexShader, m_pLeafVertexShaderDecl, m_pLeafVertexShader);
+		CSpeedTreeWrapper::SetVertexShaders(m_pBranchShader, m_pLeafShader);
 		return true;
 	}
 
 	return false;
 }
 
-bool CSpeedTreeForestDirectX::SetRenderingDevice(LPDIRECT3DDEVICE9 lpDevice)
+bool CSpeedTreeForestDirectX::SetRenderingDevice(ID3D11Device* lpDevice)
 {
 	m_pDx = lpDevice;
 
@@ -93,35 +51,28 @@ bool CSpeedTreeForestDirectX::SetRenderingDevice(LPDIRECT3DDEVICE9 lpDevice)
 
 	float afLight1[] =
 	{
-		c_afLightPosition[0], c_afLightPosition[1], c_afLightPosition[2],	// pos
-		c_afLightDiffuse[0], c_afLightDiffuse[1], c_afLightDiffuse[2],		// diffuse
-		c_afLightAmbient[0], c_afLightAmbient[1], c_afLightAmbient[2],		// ambient
-		c_afLightSpecular[0], c_afLightSpecular[1], c_afLightSpecular[2],	// specular
-		c_afLightPosition[3],												// directional flag
-		1.0f, 0.0f, 0.0f													// attenuation (constant, linear, quadratic)
+		c_afLightPosition[0], c_afLightPosition[1], c_afLightPosition[2],
+		c_afLightDiffuse[0], c_afLightDiffuse[1], c_afLightDiffuse[2],
+		c_afLightAmbient[0], c_afLightAmbient[1], c_afLightAmbient[2],
+		c_afLightSpecular[0], c_afLightSpecular[1], c_afLightSpecular[2],
+		c_afLightPosition[3],
+		1.0f, 0.0f, 0.0f
 	};
 
 	CSpeedTreeRT::SetNumWindMatrices(c_nNumWindMatrices);
-
-	CSpeedTreeRT::SetLightAttributes(0, afLight1);	
+	CSpeedTreeRT::SetLightAttributes(0, afLight1);
 	CSpeedTreeRT::SetLightState(0, true);
 	return true;
 }
 
-///////////////////////////////////////////////////////////////////////  
-//	CSpeedTreeForestDirectX::UploadWindMatrix
-
 void CSpeedTreeForestDirectX::UploadWindMatrix(UINT uiLocation, const float* pMatrix) const
 {
-	STATEMANAGER.SetVertexShaderConstant(uiLocation, pMatrix, 4);
+	(void)uiLocation;
+	(void)pMatrix;
 }
 
 void CSpeedTreeForestDirectX::UpdateCompundMatrix(const D3DXVECTOR3& c_rEyeVec, const D3DXMATRIX& c_rmatView, const D3DXMATRIX& c_rmatProj)
 {
-    // setup composite matrix for shader
-	D3DXMATRIX matBlend;
-	D3DXMatrixIdentity(&matBlend);
-
 	D3DXMATRIX matBlendShader;
 	D3DXMatrixMultiply(&matBlendShader, &c_rmatView, &c_rmatProj);
 
@@ -131,11 +82,10 @@ void CSpeedTreeForestDirectX::UpdateCompundMatrix(const D3DXVECTOR3& c_rEyeVec, 
 	afDirection[2] = matBlendShader.m[2][2];
 	CSpeedTreeRT::SetCamera(c_rEyeVec, afDirection);
 
-	STATEMANAGER.SetVertexShaderConstant(c_nVertexShader_CompoundMatrix, &matBlendShader, 4);
+	D3DXMatrixTranspose(&matBlendShader, &matBlendShader);
+	if (_mgr)
+		_mgr->GetCbMgr()->SetSpeedTreeCompoundMatrix(matBlendShader);
 }
-
-///////////////////////////////////////////////////////////////////////  
-//	CSpeedTreeForestDirectX::Render
 
 void CSpeedTreeForestDirectX::Render(unsigned long ulRenderBitVector)
 {
@@ -144,10 +94,11 @@ void CSpeedTreeForestDirectX::Render(unsigned long ulRenderBitVector)
 	if (m_pMainTreeMap.empty())
 		return;
 
+	if (!EnsureVertexShaders())
+		return;
+
 	if (!(ulRenderBitVector & Forest_RenderToShadow) && !(ulRenderBitVector & Forest_RenderToMiniMap))
 		UpdateCompundMatrix(CCameraManager::Instance().GetCurrentCamera()->GetEye(), ms_matView, ms_matProj);
-
-	DWORD dwLightState = STATEMANAGER.GetRenderState(RS11_LIGHTING);
 
 #ifdef WRAPPER_USE_DYNAMIC_LIGHTING
 	STATEMANAGER.SetRenderState(RS11_LIGHTING, TRUE);
@@ -155,170 +106,107 @@ void CSpeedTreeForestDirectX::Render(unsigned long ulRenderBitVector)
 	STATEMANAGER.SetRenderState(RS11_LIGHTING, FALSE);
 #endif
 
-	TTreeMap::iterator itor;
-	UINT uiCount;
-	
-	itor = m_pMainTreeMap.begin();
-
-	while (itor != m_pMainTreeMap.end())
+	UINT uiCount = 0;
+	for (auto& it : m_pMainTreeMap)
 	{
-		auto pMainTree = (itor++)->second;
-		auto ppInstances = pMainTree->GetInstances(uiCount);
-
-		for (auto it : ppInstances)
-			it->Advance();
+		auto ppInstances = it.second->GetInstances(uiCount);
+		for (auto& inst : ppInstances)
+			inst->Advance();
 	}
 
-	STATEMANAGER.SetVertexShaderConstant(c_nVertexShader_Light,	m_afLighting, 3);
-	STATEMANAGER.SetVertexShaderConstant(c_nVertexShader_Fog, m_afFog, 1);
-
-	if (ulRenderBitVector & Forest_RenderToShadow)
+	if (_mgr)
 	{
-		//STATEMANAGER.SetTextureStageState(0, TSS11_COLOROP,	TOP11_DISABLE);
-		STATEMANAGER.SetTextureStageState(0, TSS11_ALPHAARG1,	TA11_TEXTURE);
-		STATEMANAGER.SetTextureStageState(0, TSS11_ALPHAARG2,	TA11_DIFFUSE);
-		STATEMANAGER.SetTextureStageState(0, TSS11_ALPHAOP,	TOP11_MODULATE);
+		_mgr->GetCbMgr()->SetSpeedTreeLight(m_afLighting);
+		_mgr->GetCbMgr()->SetSpeedTreeFog(m_afFog);
 	}
-	else
-	{
-		STATEMANAGER.SetTextureStageState(0, TSS11_COLORARG1,	TA11_TEXTURE);
-		STATEMANAGER.SetTextureStageState(0, TSS11_COLORARG2,	TA11_DIFFUSE);
-		STATEMANAGER.SetTextureStageState(0, TSS11_COLOROP,	TOP11_MODULATE);
-		STATEMANAGER.SetTextureStageState(0, TSS11_ALPHAARG1,	TA11_TEXTURE);
-		STATEMANAGER.SetTextureStageState(0, TSS11_ALPHAARG2,	TA11_DIFFUSE);
-		STATEMANAGER.SetTextureStageState(0, TSS11_ALPHAOP,	TOP11_MODULATE);
-		STATEMANAGER.SetSamplerState(0, SS11_MINFILTER, TF11_LINEAR);
-		STATEMANAGER.SetSamplerState(0, SS11_MAGFILTER, TF11_LINEAR);
-		STATEMANAGER.SetSamplerState(0, SS11_MIPFILTER, TF11_LINEAR);
 
-		STATEMANAGER.SetTextureStageState(1, TSS11_COLORARG1, TA11_TEXTURE);
-		STATEMANAGER.SetTextureStageState(1, TSS11_COLORARG2, TA11_CURRENT);
-		STATEMANAGER.SetTextureStageState(1, TSS11_COLOROP, TOP11_MODULATE);
-		STATEMANAGER.SetTextureStageState(1, TSS11_ALPHAOP, TOP11_DISABLE);
-		STATEMANAGER.SetSamplerState(1, SS11_ADDRESSU, D3D11_TEXTURE_ADDRESS_WRAP);
-		STATEMANAGER.SetSamplerState(1, SS11_ADDRESSV, D3D11_TEXTURE_ADDRESS_WRAP);
-	}
+	STATEMANAGER.SetTextureStageState(0, TSS11_COLORARG1, TA11_TEXTURE);
+	STATEMANAGER.SetTextureStageState(0, TSS11_COLORARG2, TA11_DIFFUSE);
+	STATEMANAGER.SetTextureStageState(0, TSS11_COLOROP, TOP11_MODULATE);
+	STATEMANAGER.SetTextureStageState(0, TSS11_ALPHAARG1, TA11_TEXTURE);
+	STATEMANAGER.SetTextureStageState(0, TSS11_ALPHAARG2, TA11_DIFFUSE);
+	STATEMANAGER.SetTextureStageState(0, TSS11_ALPHAOP, TOP11_MODULATE);
+	STATEMANAGER.SetSamplerState(0, SS11_MINFILTER, TF11_LINEAR);
+	STATEMANAGER.SetSamplerState(0, SS11_MAGFILTER, TF11_LINEAR);
+	STATEMANAGER.SetSamplerState(0, SS11_MIPFILTER, TF11_LINEAR);
+
+	STATEMANAGER.SetTextureStageState(1, TSS11_COLORARG1, TA11_TEXTURE);
+	STATEMANAGER.SetTextureStageState(1, TSS11_COLORARG2, TA11_CURRENT);
+	STATEMANAGER.SetTextureStageState(1, TSS11_COLOROP, TOP11_MODULATE);
+	STATEMANAGER.SetTextureStageState(1, TSS11_ALPHAOP, TOP11_DISABLE);
+	STATEMANAGER.SetSamplerState(1, SS11_ADDRESSU, D3D11_TEXTURE_ADDRESS_WRAP);
+	STATEMANAGER.SetSamplerState(1, SS11_ADDRESSV, D3D11_TEXTURE_ADDRESS_WRAP);
 
 	STATEMANAGER.SaveRenderState(RS11_ALPHATESTENABLE, TRUE);
-	STATEMANAGER.SaveRenderState(RS11_CULLMODE, D3D11_CULL_FRONT);
+	STATEMANAGER.SaveRenderState(RS11_CULLMODE, D3D11_CULL_NONE);
 
-	// choose fixed function pipeline or custom shader for fronds and branches
-	_mgr->SetShader(VF_PDT2);
-
-	// render branches
 	if (ulRenderBitVector & Forest_RenderBranches)
 	{
-		itor = m_pMainTreeMap.begin();
-
-		while (itor != m_pMainTreeMap.end())
+		m_pBranchShader->Set();
+		for (auto& it : m_pMainTreeMap)
 		{
-			auto pMainTree = (itor++)->second;
+			auto pMainTree = it.second;
 			auto ppInstances = pMainTree->GetInstances(uiCount);
-			
-			pMainTree->SetupBranchForTreeType();
 
-			for (UINT i = 0; i < uiCount; ++i)
-				if (ppInstances[i]->isShow())
-					ppInstances[i]->RenderBranches();
+			pMainTree->SetupBranchForTreeType();
+			for (auto& inst : ppInstances)
+				if (inst->isShow())
+					inst->RenderBranches();
 		}
 	}
 
-	// set render states
 	STATEMANAGER.SetRenderState(RS11_CULLMODE, D3D11_CULL_NONE);
 
-	// render fronds
 	if (ulRenderBitVector & Forest_RenderFronds)
 	{
-		itor = m_pMainTreeMap.begin();
-
-		while (itor != m_pMainTreeMap.end())
+		m_pBranchShader->Set();
+		for (auto& it : m_pMainTreeMap)
 		{
-			auto pMainTree = (itor++)->second;
+			auto pMainTree = it.second;
 			auto ppInstances = pMainTree->GetInstances(uiCount);
 
 			pMainTree->SetupFrondForTreeType();
-
-			for (auto it : ppInstances)
-			{
-				if (it->isShow())
-					it->RenderFronds();
-			}
+			for (auto& inst : ppInstances)
+				if (inst->isShow())
+					inst->RenderFronds();
 		}
 	}
 
-	// render leaves
 	if (ulRenderBitVector & Forest_RenderLeaves)
 	{
-		// D3D11: ms_pLeafVertexShader is always NULL — leaf rendering goes through the
-		// standard VF_PDT pipeline. Only require the declaration to be present.
-		_mgr->SetShader(VF_PDT2);
-		STATEMANAGER.SaveRenderState(RS11_ZWRITEENABLE, FALSE);
-
+		m_pLeafShader->Set();
 		if (ulRenderBitVector & Forest_RenderToShadow || ulRenderBitVector & Forest_RenderToMiniMap)
-		{
-			STATEMANAGER.SaveRenderState(RS11_ALPHAREF, 0x00000000);
-		}
+			STATEMANAGER.SaveRenderState(RS11_ALPHAREF, 0);
 
-		itor = m_pMainTreeMap.begin();
-
-		while (itor != m_pMainTreeMap.end())
+		for (auto& it : m_pMainTreeMap)
 		{
-			auto pMainTree = (itor++)->second;
+			auto pMainTree = it.second;
 			auto ppInstances = pMainTree->GetInstances(uiCount);
 
 			pMainTree->SetupLeafForTreeType();
-
-			for (auto it : ppInstances)
-			{
-				if (it->isShow())
-					it->RenderLeaves();
-			}
-
+			for (auto& inst : ppInstances)
+				if (inst->isShow())
+					inst->RenderLeaves();
 			pMainTree->EndLeafForTreeType();
 		}
 
 		if (ulRenderBitVector & Forest_RenderToShadow || ulRenderBitVector & Forest_RenderToMiniMap)
-		{
 			STATEMANAGER.RestoreRenderState(RS11_ALPHAREF);
-		}
-		// D3D11: no D3D9 vertex shader was saved, nothing to restore
-		STATEMANAGER.RestoreRenderState(RS11_ZWRITEENABLE);
 	}
 
-	// render billboards
-	#ifndef WRAPPER_NO_BILLBOARD_MODE
-		if (ulRenderBitVector & Forest_RenderBillboards)
-		{
-			STATEMANAGER.SetRenderState(RS11_LIGHTING, FALSE);
+	STATEMANAGER.SetRenderState(RS11_LIGHTING, FALSE);
 
-			itor = m_pMainTreeMap.begin();
-
-			while (itor != m_pMainTreeMap.end())
-			{
-				auto pMainTree = (itor++)->second;
-				auto ppInstances = pMainTree->GetInstances(uiCount);
-
-				pMainTree->SetupLeafForTreeType();
-
-				for (auto it : ppInstances)
-				{
-					if (it->isShow())
-						it->RenderBillboards();
-				}
-			}
-		}
-	#endif
-
-	STATEMANAGER.SetRenderState(RS11_LIGHTING, dwLightState);
-
-	// ����������� ���� TextureStage 1�� COLOROP�� ALPHAOP�� ����� ���� ������ �� �����
-	// ����� ���´�. (�ȱ׷��� �˰� ���� ���ɼ���..)
-	if (!(ulRenderBitVector & Forest_RenderToShadow))
+	if (ulRenderBitVector & Forest_RenderBillboards)
 	{
-		STATEMANAGER.SetTextureStageState(1, TSS11_COLOROP, TOP11_DISABLE);
-		STATEMANAGER.SetTextureStageState(1, TSS11_ALPHAOP, TOP11_DISABLE);
+		for (auto& it : m_pMainTreeMap)
+		{
+			auto ppInstances = it.second->GetInstances(uiCount);
+			for (auto& inst : ppInstances)
+				if (inst->isShow())
+					inst->RenderBillboards();
+		}
 	}
 
-	STATEMANAGER.RestoreRenderState(RS11_ALPHATESTENABLE);
 	STATEMANAGER.RestoreRenderState(RS11_CULLMODE);
+	STATEMANAGER.RestoreRenderState(RS11_ALPHATESTENABLE);
 }

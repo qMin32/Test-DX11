@@ -40,6 +40,8 @@
 
 #include "EterLib/D3D9Compat.h"
 #include "EterLib/D3DXMathCompat.h"
+#include "qMin32Lib/DxManager.h"
+#include "VertexShaders.h"
 #include <vector>
 #include <memory>
 #include <cstdint>
@@ -103,7 +105,7 @@ public:
 	virtual	~CSpeedTreeWrapper();
 	
 	const float *				GetPosition();
-	static void					SetVertexShaders(LPDIRECT3DVERTEXDECLARATION9 pBranchVertexShader, LPDIRECT3DVERTEXDECLARATION9 pLeafVertexShader, LPDIRECT3DVERTEXSHADER9 pVertexShader);
+	static void					SetVertexShaders(const SpeedTreeShaderPtr& pBranchShader, const SpeedTreeShaderPtr& pLeafShader);
 
 	// geometry 
 	bool                        LoadTree(const char * pszSptFile, const BYTE * c_pbBlock = NULL, unsigned int uiBlockSize = 0, unsigned int nSeed = 1, float fSize = -1.0f, float fSizeVariance = -1.0f);
@@ -169,22 +171,22 @@ private:
 	CSpeedTreeRT::SGeometry*		m_pGeometryCache;				// cache for pulling geometry from SpeedTree avoids lots of reallocation
 
 	// branch buffers
-	ID3D11Buffer*					m_pBranchVertexBuffer;			// branch vertex buffer
+	VBufferPtr						m_pBranchVertexBuffer;			// branch vertex buffer
 	unsigned int					m_unBranchVertexCount;			// number of vertices in branches
 	IBufferPtr						m_pBranchIndexBuffer;			// branch index buffer
 	std::vector<uint32_t>			m_branchStripOffsets;			// strip start indices (LOD0 ordering)
 	std::vector<std::vector<uint16_t>> m_branchStripLengths;			// [lod][strip] index counts
-
+	
 	// frond buffers
-	ID3D11Buffer*					m_pFrondVertexBuffer;			// frond vertex buffer
+	VBufferPtr						m_pFrondVertexBuffer;			// frond vertex buffer
 	unsigned int					m_unFrondVertexCount;			// number of vertices in frond
 	IBufferPtr						m_pFrondIndexBuffer;			// frond index buffer
 	std::vector<uint32_t>			m_frondStripOffsets;			// strip start indices (LOD0 ordering)
 	std::vector<std::vector<uint16_t>> m_frondStripLengths;			// [lod][strip] index counts
-
+	
 	// leaf buffers
 	unsigned short					m_usNumLeafLods;				// the number of leaf LODs
-	ID3D11Buffer**					m_pLeafVertexBuffer;			// leaf vertex buffer
+	VBufferPtr*					m_pLeafVertexBuffer;			// leaf vertex buffer
 	bool*							m_pLeavesUpdatedByCpu;			// stores which LOD's have been updated already per frame
 	
 	// tree properties
@@ -201,10 +203,9 @@ private:
 	CGraphicImageInstance			m_ShadowImageInstance;			// shadow texture object (used if shadows are enabled)
 	CGraphicImageInstance			m_CompositeImageInstance;
 
-	static LPDIRECT3DVERTEXDECLARATION9 ms_dwBranchVertexShader;
-	static LPDIRECT3DVERTEXDECLARATION9 ms_pLeafVertexShaderDecl;
-	static LPDIRECT3DVERTEXSHADER9 ms_pLeafVertexShader;
-};
+	static SpeedTreeShaderPtr ms_pBranchShader;
+	static SpeedTreeShaderPtr ms_pLeafShader;
+	};
 
 #pragma warning(pop)
 

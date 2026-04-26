@@ -72,10 +72,8 @@ const float	c_afLightGlobalAmbient[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 #endif
 
 // leaf placement algorithm (enable ONE of the two below)
-// D3D11: GPU leaf placement requires a custom D3D9 vertex shader that is not
-// available in D3D11. Use CPU leaf placement instead.
-//#define WRAPPER_USE_GPU_LEAF_PLACEMENT
-#define WRAPPER_USE_CPU_LEAF_PLACEMENT
+#define WRAPPER_USE_GPU_LEAF_PLACEMENT
+//#define WRAPPER_USE_CPU_LEAF_PLACEMENT
 
 #if defined WRAPPER_USE_GPU_LEAF_PLACEMENT && defined WRAPPER_USE_CPU_LEAF_PLACEMENT
 	#error Please define exactly one leaf placement algorithm

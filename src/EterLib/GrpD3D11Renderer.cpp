@@ -125,6 +125,7 @@ bool CD3D11Renderer::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pCon
 	_mgr->SetConstantBuffer(_mgr->GetCbMgr()->m_pCBFog, 4);
 	_mgr->SetConstantBuffer(_mgr->GetCbMgr()->m_pCBScreenSize, 5);
 	_mgr->SetConstantBuffer(_mgr->GetCbMgr()->m_pCBBonePalette, 6);
+	_mgr->SetConstantBuffer(_mgr->GetCbMgr()->m_pCBSpeedTree, 7);
 
 	Tracenf("D3D11Renderer: Initialization complete");
 	return true;
@@ -388,6 +389,7 @@ void CD3D11Renderer::FlushAllState()
 	_mgr->GetCbMgr()->FlushMaterial();
 	_mgr->GetCbMgr()->FlushLighting();
 	_mgr->GetCbMgr()->FlushFog();
+	_mgr->GetCbMgr()->FlushSpeedTree();
 	FlushBlendState();
 	FlushDepthState();
 	FlushRasterState();

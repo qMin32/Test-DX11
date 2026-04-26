@@ -131,7 +131,7 @@ void CSpeedTreeForest::DeleteInstance(SpeedTreeWrapperPtr pInstance)
 
 void CSpeedTreeForest::UpdateSystem(float fCurrentTime)
 {
-	// 업데이트 할 때 한번
+	// 트   箕
 	static float fLastTime = fCurrentTime;
 	float fElapsedTime = fCurrentTime - fLastTime;
 	CSpeedTreeRT::SetTime(fElapsedTime);
@@ -181,66 +181,73 @@ void CSpeedTreeForest::SetWindStrength(float fStrength)
 //	CSpeedTreeForest::SetupWindMatrices
 void CSpeedTreeForest::SetupWindMatrices(float fTimeInSecs)
 {
-    static float afMatrixTimes[c_nNumWindMatrices] = { 0.0f };
-    static float afFrequencies[c_nNumWindMatrices][2] =
-    {
-        { 0.15f, 0.17f },
-        { 0.25f, 0.15f },
-        { 0.19f, 0.05f },
-        { 0.15f, 0.22f }
-    };
+	// matrix computational data
+	static float afMatrixTimes[c_nNumWindMatrices] = { 0.0f };
+	static float afFrequencies[c_nNumWindMatrices][2] = 
+	{
+		{ 0.15f, 0.17f },
+		{ 0.25f, 0.15f },
+		{ 0.19f, 0.05f },
+		{ 0.15f, 0.22f }
+	};
 
-    static float fTimeOfLastCall = 0.0f;
-    float fTimeSinceLastCall = fTimeInSecs - fTimeOfLastCall;
-    if (fTimeSinceLastCall < 0.0f)
-        fTimeSinceLastCall = 0.0f;
-    fTimeOfLastCall = fTimeInSecs;
+	// compute time since last call
+	static float fTimeOfLastCall = 0.0f;
+	float fTimeSinceLastCall = fTimeInSecs - fTimeOfLastCall;
+	fTimeOfLastCall = fTimeInSecs;
 
-    static float fOldStrength = m_fWindStrength;
-    const float fNewStrength = m_fWindStrength;
-    const float fSafeStrength = (fNewStrength <= 0.0001f) ? 0.0001f : fNewStrength;
+	// wind strength
+	static float fOldStrength = m_fWindStrength;
 
-    for (int i = 0; i < c_nNumWindMatrices; ++i)
-        afMatrixTimes[i] += fTimeSinceLastCall;
+	// increment matrix times
+	for (int i = 0; i < c_nNumWindMatrices; ++i)
+		afMatrixTimes[i] += fTimeSinceLastCall;
 
-    float fBaseAngle = fNewStrength * 35.0f;
+	// compute maximum branch throw
+	float fBaseAngle = m_fWindStrength * 35.0f;
 
-    for (int j = 0; j < c_nNumWindMatrices; ++j)
-    {
-        if (fNewStrength > 0.0001f && fOldStrength > 0.0001f)
-            afMatrixTimes[j] = (afMatrixTimes[j] * fOldStrength) / fSafeStrength;
+	// build rotation matrices
+	for (int j = 0; j < c_nNumWindMatrices; ++j)
+	{
+		// adjust time to prevent "jumping"
+		if (m_fWindStrength != 0.0f)
+			afMatrixTimes[j] = (afMatrixTimes[j] * fOldStrength) / m_fWindStrength;
 
-        float fBaseFreq = fNewStrength * 20.0f;
-        float fXPercent = sinf(fBaseFreq * afFrequencies[j % c_nNumWindMatrices][0] * afMatrixTimes[j]);
-        float fYPercent = cosf(fBaseFreq * afFrequencies[j % c_nNumWindMatrices][1] * afMatrixTimes[j]);
+		// compute percentages for each axis
+		float fBaseFreq = m_fWindStrength * 20.0f;
+		float fXPercent = sinf(fBaseFreq * afFrequencies[j % c_nNumWindMatrices][0] * afMatrixTimes[j]);
+		float fYPercent = cosf(fBaseFreq * afFrequencies[j % c_nNumWindMatrices][1] * afMatrixTimes[j]);
 
-        const float c_fDeg2Rad = 57.2957795f;
+		// build compound rotation matrix (rotate on 'x' then on 'y')
+		const float c_fDeg2Rad = 57.2957795f;
         float fSinX = sinf(fBaseAngle * fXPercent / c_fDeg2Rad);
         float fSinY = sinf(fBaseAngle * fYPercent / c_fDeg2Rad);
         float fCosX = cosf(fBaseAngle * fXPercent / c_fDeg2Rad);
         float fCosY = cosf(fBaseAngle * fYPercent / c_fDeg2Rad);
 
         float afMatrix[16] = { 0.0f };
-        afMatrix[0]  = fCosY;
-        afMatrix[2]  = -fSinY;
-        afMatrix[4]  = fSinX * fSinY;
-        afMatrix[5]  = fCosX;
-        afMatrix[6]  = fSinX * fCosY;
-        afMatrix[8]  = fSinY * fCosX;
-        afMatrix[9]  = -fSinX;
+        afMatrix[0] = fCosY;
+        afMatrix[2] = -fSinY;
+        afMatrix[4] = fSinX * fSinY;
+        afMatrix[5] = fCosX;
+        afMatrix[6] = fSinX * fCosY;
+        afMatrix[8] = fSinY * fCosX;
+        afMatrix[9] = -fSinX;
         afMatrix[10] = fCosX * fCosY;
         afMatrix[15] = 1.0f;
 
-    #ifdef WRAPPER_USE_CPU_WIND
-        CSpeedTreeRT::SetWindMatrix(j, afMatrix);
-    #endif
+		#ifdef WRAPPER_USE_CPU_WIND
+			CSpeedTreeRT::SetWindMatrix(j, afMatrix);
+		#endif
 
-    #ifdef WRAPPER_USE_GPU_WIND
-        UploadWindMatrix(c_nVertexShader_WindMatrices + j * 4, afMatrix);
-    #endif
-    }
+		#ifdef WRAPPER_USE_GPU_WIND
+			// graphics API specific
+			UploadWindMatrix(c_nVertexShader_WindMatrices + j * 4, afMatrix);
+		#endif
+	}
 
-    fOldStrength = fNewStrength;
+	// track wind strength
+	fOldStrength = m_fWindStrength;
 }
 
 
