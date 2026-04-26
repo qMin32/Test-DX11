@@ -64,9 +64,8 @@ class CGrannyMesh
 		void					Destroy();
 
 		void					SetPNT2Mesh();
+		bool					HasSkinnedVertices() const;
 
-		void					DeformPNTVertices(void* dstBaseVertices, D3DXMATRIX* boneMatrices, granny_mesh_binding* pgrnMeshBinding) const;
-		bool					CanDeformPNTVertices() const;
 		bool					IsTwoSide() const;
 
 		int						GetVertexCount() const;
@@ -99,7 +98,6 @@ class CGrannyMesh
 		granny_mesh_binding *	m_pgrnMeshBindingTemp;
 		// END_OF_WORK
 
-		granny_mesh_deformer *	m_pgrnMeshDeformer;
 
 		// Granny Material Data
 		std::vector<DWORD>		m_mtrlIndexVector;
@@ -111,7 +109,7 @@ class CGrannyMesh
 		int						m_vtxBasePos;
 		int						m_idxBasePos;
 
-		bool					m_canDeformPNTVertex;
+		bool					m_hasSkinnedVertex;
 		bool					m_isTwoSide;
 	private:
 		bool						m_bHaveBlendThing;

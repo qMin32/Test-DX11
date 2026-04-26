@@ -2,7 +2,7 @@
 #include "ModelInstance.h"
 #include "Model.h"
 
-void CGrannyModelInstance::CopyMotion(CGrannyModelInstance * pModelInstance, bool bIsFreeSourceControl)
+void CGrannyModelInstance::CopyMotion(CGrannyModelInstance* pModelInstance, bool bIsFreeSourceControl)
 {
 	if (!pModelInstance->IsMotionPlaying())
 		return;
@@ -45,39 +45,31 @@ bool CGrannyModelInstance::IsMotionPlaying()
 	return true;
 }
 
-void CGrannyModelInstance::SetMotionPointer(const CGrannyMotion * pMotion, float blendTime, int loopCount, float speedRatio)
+void CGrannyModelInstance::SetMotionPointer(const CGrannyMotion* pMotion, float blendTime, int loopCount, float speedRatio)
 {
-	// TEST
 	if (!m_pgrnWorldPoseReal)
 		return;
-	// END_OF_TEST
 
-	granny_model_instance * pgrnModelInstance = m_pgrnModelInstance;
+	granny_model_instance* pgrnModelInstance = m_pgrnModelInstance;
 	if (!pgrnModelInstance)
 		return;
 
 	float localTime = GetLocalTime();
 
-	bool isFirst=false;
+	bool isFirst = false;
 	if (m_pgrnCtrl)
 	{
-		//float durationLeft = GrannyGetControlDurationLeft(m_pgrnCtrl);
-		//float easeOutTime = (blendTime < durationLeft) ? blendTime : durationLeft;
-		//float oldCtrlFinishTime = GrannyEaseControlOut(m_pgrnCtrl, blendTime); //easeOutTime);
 		GrannySetControlEaseOutCurve(m_pgrnCtrl, localTime, localTime + blendTime, 1.0f, 1.0f, 0.0f, 0.0f);
 
 		GrannySetControlEaseIn(m_pgrnCtrl, false);
 		GrannySetControlEaseOut(m_pgrnCtrl, true);
 
-		//Tracef("easeOut %f\n", easeOutTime);
 		GrannyCompleteControlAt(m_pgrnCtrl, localTime + blendTime);
-		//GrannyCompleteControlAt(m_pgrnCtrl, oldCtrlFinishTime);
-		//GrannyCompleteControlAt(m_pgrnCtrl, localTime);
 		GrannyFreeControlIfComplete(m_pgrnCtrl);
 	}
 	else
 	{
-		isFirst=true;
+		isFirst = true;
 	}
 
 	m_pgrnAni = pMotion->GetGrannyAnimationPointer();
@@ -101,18 +93,15 @@ void CGrannyModelInstance::SetMotionPointer(const CGrannyMotion * pMotion, float
 			GrannySetControlEaseInCurve(m_pgrnCtrl, localTime, localTime + blendTime, 0.0f, 0.0f, 1.0f, 1.0f);
 	}
 
-	//GrannyEaseControlIn(m_pgrnCtrl, blendTime, false);
 	GrannyFreeControlOnceUnused(m_pgrnCtrl);
-	//Tracef("easeIn %f\n", blendTime);
 }
 
 void CGrannyModelInstance::ChangeMotionPointer(const CGrannyMotion* pMotion, int loopCount, float speedRatio)
 {
-	granny_model_instance * pgrnModelInstance = m_pgrnModelInstance;
+	granny_model_instance* pgrnModelInstance = m_pgrnModelInstance;
 	if (!pgrnModelInstance)
 		return;
 
-	// 보간 되는 앞부분을 스킵 하기 위해 LocalTime 을 어느 정도 무시한다. - [levites]
 	float fSkipTime = 0.3f;
 	float localTime = GetLocalTime() - fSkipTime;
 
@@ -138,11 +127,10 @@ void CGrannyModelInstance::ChangeMotionPointer(const CGrannyMotion* pMotion, int
 }
 
 void CGrannyModelInstance::SetMotionAtEnd()
-{	
+{
 	if (!m_pgrnCtrl)
 		return;
 
-	//Tracef("%f\n", endingTime);
 	float endingTime = GrannyGetControlLocalDuration(m_pgrnCtrl);
 	GrannySetControlRawLocalClock(m_pgrnCtrl, endingTime);
 }

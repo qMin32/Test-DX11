@@ -21,3 +21,8 @@ New ConstantBufferManager to create/set constants.
 This is the initial test implementation.
  The next part will use the new manager to create and bind the shaders.
 /////////////////////////////             /////////////////////////////
+
+
+//////////////// second part skinned gpu - remove old deform ////////////////
+Cleaning up unnecessary code.
+/////////////////////////////             /////////////////////////////

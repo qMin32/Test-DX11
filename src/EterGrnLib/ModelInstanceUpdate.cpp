@@ -102,19 +102,12 @@ class CGrannyLocalPose
 
 void CGrannyModelInstance::UpdateSkeleton(const D3DXMATRIX * c_pWorldMatrix, float /*fLocalTime*/)
 {	
-	// DELETED
-	//m_pgrnWorldPose = m_pgrnWorldPoseReal;
-	///////////////////////////////////////////
 	UpdateWorldPose();
 	UpdateWorldMatrices(c_pWorldMatrix);
 }
 
 void CGrannyModelInstance::UpdateWorldPose()
 {
-	// WEP	= m_iParentBoneIndex != 0 -> UpdateWorldPose(O)
-	// LOD	= UpdateWorldPose(O)
-	// Hair	= UpdateWorldPose(X)
-
 	if (m_ppkSkeletonInst)
 		if (*m_ppkSkeletonInst!=this)
 			return;
@@ -127,42 +120,34 @@ void CGrannyModelInstance::UpdateWorldPose()
 	const float * pAttachBoneMatrix = (mc_pParentInstance) ? mc_pParentInstance->GetBoneMatrixPointer(m_iParentBoneIndex) : NULL;
 
 	GrannySampleModelAnimationsAccelerated(m_pgrnModelInstance, pgrnSkeleton->BoneCount, pAttachBoneMatrix, pgrnLocalPose, __GetWorldPosePtr());
-	/*
-	GrannySampleModelAnimations(m_pgrnModelInstance, 0, pgrnSkeleton->BoneCount, pgrnLocalPose);
-	GrannyBuildWorldPose(pgrnSkeleton, 0, pgrnSkeleton->BoneCount, pgrnLocalPose, pAttachBoneMatrix, m_pgrnWorldPose);
-	*/
 	GrannyFreeCompletedModelControls(m_pgrnModelInstance);	
 
 }
 
 void CGrannyModelInstance::UpdateWorldMatrices(const D3DXMATRIX* c_pWorldMatrix)
 {
-	// NO_MESH_BUG_FIX
 	if (!m_meshMatrices)
 		return;
-	// END_OF_NO_MESH_BUG_FIX
-	
+
 	assert(m_pModel != NULL);
 	assert(ms_lpd3dMatStack != NULL);
-	
+
 	int meshCount = m_pModel->GetMeshCount();
-	
-	granny_matrix_4x4 * pgrnMatCompositeBuffer = GrannyGetWorldPoseComposite4x4Array(__GetWorldPosePtr());
-	D3DXMATRIX * boneMatrices = (D3DXMATRIX *) pgrnMatCompositeBuffer;
+
+	granny_matrix_4x4* pgrnMatCompositeBuffer = GrannyGetWorldPoseComposite4x4Array(__GetWorldPosePtr());
+	D3DXMATRIX* boneMatrices = (D3DXMATRIX*)pgrnMatCompositeBuffer;
 
 	for (int i = 0; i < meshCount; ++i)
 	{
-		D3DXMATRIX & rWorldMatrix = m_meshMatrices[i];
+		D3DXMATRIX& rWorldMatrix = m_meshMatrices[i];
 
-		const CGrannyMesh * pMesh = m_pModel->GetMeshPointer(i);
+		const CGrannyMesh* pMesh = m_pModel->GetMeshPointer(i);
 
-		// WORK
-		int * boneIndices = __GetMeshBoneIndices(i);
-		// END_OF_WORK
+		int* boneIndices = __GetMeshBoneIndices(i);
 
-		if (pMesh->CanDeformPNTVertices())
+		if (pMesh->HasSkinnedVertices())
 		{
-			rWorldMatrix = *c_pWorldMatrix;			
+			rWorldMatrix = *c_pWorldMatrix;
 		}
 		else
 		{
@@ -174,14 +159,4 @@ void CGrannyModelInstance::UpdateWorldMatrices(const D3DXMATRIX* c_pWorldMatrix)
 #ifdef _TEST
 	TEST_matWorld = *c_pWorldMatrix;
 #endif
-}
-
-void CGrannyModelInstance::DeformPNTVertices(void * pvDest)
-{
-	assert(m_pModel != NULL);
-	assert(m_pModel->CanDeformPNTVertices());
-
-	// WORK
-	m_pModel->DeformPNTVertices(pvDest, (D3DXMATRIX *) GrannyGetWorldPoseComposite4x4Array(__GetWorldPosePtr()), m_vct_pgrnMeshBinding);
-	// END_OF_WORK
 }

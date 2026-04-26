@@ -29,28 +29,9 @@ const CGrannyMesh* CGrannyModel::GetMeshPointer(int iMesh) const
 	return m_meshs + iMesh;
 }
 
-bool CGrannyModel::CanDeformPNTVertices() const
-{
-	return m_canDeformPNVertices;
-}
-
 bool CGrannyModel::HasSkinnedMesh() const
 {
 	return m_deformVtxCount > 0 && m_skinnedVtxBuf != nullptr;
-}
-
-void CGrannyModel::DeformPNTVertices(void * dstBaseVertices, D3DXMATRIX * boneMatrices, const std::vector<granny_mesh_binding*>& c_rvct_pgrnMeshBinding) const
-{
-	int meshCount = GetMeshCount();
-
-	for (int iMesh = 0; iMesh < meshCount; ++iMesh)
-	{
-		assert(iMesh < c_rvct_pgrnMeshBinding.size());
-
-		CGrannyMesh & rMesh = m_meshs[iMesh];
-		if (rMesh.CanDeformPNTVertices())
-			rMesh.DeformPNTVertices(dstBaseVertices, boneMatrices, c_rvct_pgrnMeshBinding[iMesh]);
-	}
 }
 
 int CGrannyModel::GetRigidVertexCount() const
@@ -236,7 +217,7 @@ bool CGrannyModel::LoadMeshs()
 				return false;
 
 			vtxDeformPos += GrannyGetMeshVertexCount(pgrnMesh);
-			m_canDeformPNVertices |= rMesh.CanDeformPNTVertices();
+			m_hasSkinnedVertices |= rMesh.HasSkinnedVertices();
 		}
 		m_bHaveBlendThing |= rMesh.HaveBlendThing();
 
@@ -408,7 +389,7 @@ void CGrannyModel::Initialize()
 	m_vtxCount = 0;
 	m_idxCount = 0;
 
-	m_canDeformPNVertices = false;
+	m_hasSkinnedVertices = false;
 
 	m_stride = 0;
 	m_skinnedStride = 0;

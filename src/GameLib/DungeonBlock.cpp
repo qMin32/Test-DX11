@@ -220,7 +220,7 @@ bool CDungeonBlock::Load(const char * c_szFileName)
 	for (int i = 0; i < m_pThing->GetModelCount(); ++i)
 	{
 		CDungeonModelInstance* pModelInstance = new CDungeonModelInstance;
-		pModelInstance->SetMainModelPointer(m_pThing->GetModelPointer(i), nullptr);
+		pModelInstance->SetMainModelPointer(m_pThing->GetModelPointer(i));
 	}
 
 	return true;

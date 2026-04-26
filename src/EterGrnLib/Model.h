@@ -28,9 +28,7 @@ class CGrannyModel : public CReferenceObject
 		int GetDeformVertexCount() const;
 		int GetVertexCount() const;
 
-		bool CanDeformPNTVertices() const;
 		bool HasSkinnedMesh() const;
-		void DeformPNTVertices(void* dstBaseVertices, D3DXMATRIX* boneMatrices, const std::vector<granny_mesh_binding*>& c_rvct_pgrnMeshBinding) const;
 
 		int GetIdxCount();
 		int GetMeshCount() const;
@@ -79,8 +77,8 @@ class CGrannyModel : public CReferenceObject
 		int						m_meshNodeSize;
 		int						m_meshNodeCapacity;
 
-		bool					m_canDeformPNVertices;
-		
+		bool					m_hasSkinnedVertices;
+
 		CGrannyMaterialPalette	m_kMtrlPal;
 	private:
 		bool					m_bHaveBlendThing;

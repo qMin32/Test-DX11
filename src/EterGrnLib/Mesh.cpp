@@ -2,7 +2,6 @@
 #include "Mesh.h"
 #include "Model.h"
 #include "Material.h"
-#include "Deform.h"
 
 granny_data_type_definition GrannyPNT3322VertexType[5] =
 {
@@ -91,50 +90,6 @@ bool CGrannyMesh::IsPNT2() const
 	return m_pgrnMeshType == GrannyPNT3322VertexType;
 }
 
-void CGrannyMesh::DeformPNTVertices(void* dstBaseVertices, D3DXMATRIX* boneMatrices, granny_mesh_binding* pgrnMeshBinding) const
-{
-	assert(dstBaseVertices != NULL);
-	assert(boneMatrices != NULL);
-	assert(m_pgrnMeshDeformer != NULL);
-
-	const granny_mesh* pgrnMesh = GetGrannyMeshPointer();
-
-	TPNTVertex* srcVertices = (TPNTVertex*)GrannyGetMeshVertices(pgrnMesh);
-	TPNTVertex* dstVertices = ((TPNTVertex*)dstBaseVertices) + m_vtxBasePos;
-
-	int vtxCount = GrannyGetMeshVertexCount(pgrnMesh);
-
-	// WORK
-	granny_int32x* boneIndices = (granny_int32x*)GrannyGetMeshBindingToBoneIndices(pgrnMeshBinding);
-	// END_OF_WORK
-
-	extern bool CPU_HAS_SSE2;
-	if (CPU_HAS_SSE2) {
-		DeformPWNT3432toGrannyPNGBT33332(
-			vtxCount,
-			srcVertices,
-			dstVertices,
-			boneIndices,
-			(granny_matrix_4x4 const*)boneMatrices,
-			sizeof(granny_pwnt3432_vertex),
-			sizeof(granny_pnt332_vertex)
-		);
-	}
-	else {
-		GrannyDeformVertices(
-			m_pgrnMeshDeformer,
-			boneIndices,
-			(float*)boneMatrices,
-			vtxCount,
-			srcVertices,
-			dstVertices);
-	}
-}
-
-bool CGrannyMesh::CanDeformPNTVertices() const
-{
-	return m_canDeformPNTVertex;
-}
 
 const granny_mesh * CGrannyMesh::GetGrannyMeshPointer() const
 {
@@ -194,13 +149,7 @@ bool CGrannyMesh::CreateFromGrannyMeshPointer(granny_skeleton * pgrnSkeleton, gr
 
 	if (!GrannyMeshIsRigid(m_pgrnMesh))
 	{
-		m_canDeformPNTVertex = true;
-
-		granny_data_type_definition * pgrnInputType = GrannyGetMeshVertexType(m_pgrnMesh);
-		granny_data_type_definition * pgrnOutputType = m_pgrnMeshType;
-
-		m_pgrnMeshDeformer = GrannyNewMeshDeformer(pgrnInputType, pgrnOutputType, GrannyDeformPositionNormal, GrannyAllowUncopiedTail);
-		assert(m_pgrnMeshDeformer != NULL && "Cannot create mesh deformer");
+		m_hasSkinnedVertex = true;
 	}
 
 	// Two Side Mesh
@@ -297,6 +246,11 @@ void CGrannyMesh::SetPNT2Mesh()
 	m_pgrnMeshType = GrannyPNT3322VertexType;
 }
 
+bool CGrannyMesh::HasSkinnedVertices() const
+{
+	return m_hasSkinnedVertex;
+}
+
 void CGrannyMesh::Destroy()
 {
 	if (m_triGroupNodes)
@@ -309,9 +263,6 @@ void CGrannyMesh::Destroy()
 		GrannyFreeMeshBinding(m_pgrnMeshBindingTemp);
 	// END_OF_WORK
 
-    if (m_pgrnMeshDeformer)
-		GrannyFreeMeshDeformer(m_pgrnMeshDeformer); 	
-	
 	Initialize();
 }
 
@@ -325,14 +276,13 @@ void CGrannyMesh::Initialize()
 	// WORK
 	m_pgrnMeshBindingTemp = NULL;
 	// END_OF_WORK
-	m_pgrnMeshDeformer = NULL;
 
 	m_triGroupNodes = NULL;	
 	
 	m_vtxBasePos = 0;
 	m_idxBasePos = 0;
 
-	m_canDeformPNTVertex = false;
+	m_hasSkinnedVertex = false;
 	m_isTwoSide = false;
 	m_bHaveBlendThing = false;
 }
