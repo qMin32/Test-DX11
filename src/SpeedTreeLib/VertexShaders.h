@@ -144,7 +144,7 @@ cbuffer CBMaterial : register(b1)
 
 cbuffer CBSpeedTree : register(b7)
 {
-	float4x4 gSpeedTreeCompound;
+	row_major float4x4 gSpeedTreeCompound;
 	float4 gTreePos;
 	float4 gSpeedTreeFog;
 	float4 gSpeedTreeLightDir;
@@ -153,7 +153,7 @@ cbuffer CBSpeedTree : register(b7)
 	float4 gSpeedTreeMaterialDiffuse;
 	float4 gSpeedTreeMaterialAmbient;
 	float4 gLeafLightingAdjustment;
-	float4 gLeafTable[256];
+	float4 gLeafTable[1024];
 };
 
 Texture2D tex0 : register(t0);
@@ -207,17 +207,32 @@ VSOut VSBranch(VSInBranch v)
 VSOut VSLeaf(VSInLeaf v)
 {
 	float3 p = v.pos;
-	uint tableReg = (uint)(v.leafData.z + 0.5f);
-	uint tableIndex = tableReg >= 4 ? tableReg - 4 : 0;
-	if (tableIndex < 256)
-		p += gLeafTable[tableIndex].xyz * v.leafData.w;
+
+	uint tableIndex = (uint)(v.leafData.z + 0.5f);
+	float side = v.leafData.x;
+
+	if (tableIndex < 1024)
+	{
+		float3 o = gLeafTable[tableIndex].xyz;
+
+		if (side > 0.5f)
+			o = float3(-o.y, o.x, o.z);
+
+		p += o * v.leafData.w;
+	}
+
 	return FinishVertex(p, v.color, v.uv0, float2(0.0f, 0.0f));
 }
 
 float4 PSMain(VSOut i) : SV_Target
 {
-	float4 texColor = (gUseTexture0 != 0) ? tex0.Sample(samp0, i.uv0) : float4(1.0f, 1.0f, 1.0f, 1.0f);
+	float4 texColor = tex0.Sample(samp0, i.uv0);
+
+	float3 light = gSpeedTreeLightAmbient.rgb + gSpeedTreeLightDiffuse.rgb;
+	light = saturate(light);
+
 	float4 baseColor = texColor * i.color;
+	baseColor.rgb *= light;
 
 	if (gAlphaTestEnable != 0)
 	{

@@ -162,7 +162,7 @@ private:
 private:
 	// SpeedTreeRT data
 	CSpeedTreeRT*					m_pSpeedTree;					// the SpeedTree object
-	CSpeedTreeRT::STextures*		m_pTextureInfo;					// texture info cache
+	CSpeedTreeRT::SMapBank*		m_pTextureInfo;					// texture info cache
 	bool							m_bIsInstance;					// is this an instance?
 	std::vector<SpeedTreeWrapperPtr>	m_vInstances;					// what is an instance of us
 	SpeedTreeWrapperPtr				m_pInstanceOf;					// which tree is this an instance of
@@ -205,6 +205,7 @@ private:
 
 	static SpeedTreeShaderPtr ms_pBranchShader;
 	static SpeedTreeShaderPtr ms_pLeafShader;
+	std::string m_strBranchTextureName;
 	};
 
 #pragma warning(pop)

@@ -82,7 +82,6 @@ void CSpeedTreeForestDirectX::UpdateCompundMatrix(const D3DXVECTOR3& c_rEyeVec, 
 	afDirection[2] = matBlendShader.m[2][2];
 	CSpeedTreeRT::SetCamera(c_rEyeVec, afDirection);
 
-	D3DXMatrixTranspose(&matBlendShader, &matBlendShader);
 	if (_mgr)
 		_mgr->GetCbMgr()->SetSpeedTreeCompoundMatrix(matBlendShader);
 }

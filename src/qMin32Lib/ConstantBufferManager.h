@@ -81,7 +81,7 @@ struct CBScreenSize
 };
 
 #ifndef SPEEDTREE_MAX_LEAF_TABLE_FLOAT4
-#define SPEEDTREE_MAX_LEAF_TABLE_FLOAT4 256
+#define SPEEDTREE_MAX_LEAF_TABLE_FLOAT4 1024
 #endif
 
 struct CBSpeedTree
