@@ -122,6 +122,7 @@ CSpeedTreeForest::SpeedTreeWrapperPtr CSpeedTreeForest::CreateInstance(float x, 
 		return NULL;
 
 	pTreeInst->SetPosition(x, y, z);
+	pTreeInst->CalculateBBox();
 	pTreeInst->RegisterBoundingSphere();
 
 	return pTreeInst;

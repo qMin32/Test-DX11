@@ -387,19 +387,19 @@ bool CSpeedTreeWrapper::LoadTree(const char* pszSptFile, const BYTE* c_pbBlock, 
 
 	m_pSpeedTree->SetNumLeafRockingGroups(3);
 
-	float fSafeSize = fSize;
-	float fSafeVariance = fSizeVariance;
+	//float fSafeSize = fSize;
+	//float fSafeVariance = fSizeVariance;
 
-	if (!_finite(fSafeSize) || fSafeSize <= 0.0f)
-		fSafeSize = 1000.0f;
+	//if (!_finite(fSafeSize) || fSafeSize <= 0.0f)
+	//	fSafeSize = 1500.0f;
 
-	if (!_finite(fSafeVariance) || fSafeVariance < 0.0f)
-		fSafeVariance = 0.0f;
+	//if (!_finite(fSafeVariance) || fSafeVariance < 0.0f)
+	//	fSafeVariance = 0.0f;
 
-	if (fSafeVariance >= fSafeSize)
-		fSafeVariance = 0.0f;
+	//if (fSafeVariance >= fSafeSize)
+	//	fSafeVariance = 0.0f;
 
-	m_pSpeedTree->SetTreeSize(fSafeSize, fSafeVariance);
+	//m_pSpeedTree->SetTreeSize(fSafeSize, fSafeVariance);
 
 	UINT nSafeSeed = nSeed ? nSeed : 1;
 
@@ -414,7 +414,7 @@ bool CSpeedTreeWrapper::LoadTree(const char* pszSptFile, const BYTE* c_pbBlock, 
 	{
 		// get the dimensions
 		m_pSpeedTree->GetBoundingBox(m_afBoundingBox);
-
+		CalculateBBox();
 		// make the leaves rock in the wind
 		m_pSpeedTree->SetLeafRockingState(true);
 
@@ -927,7 +927,7 @@ CSpeedTreeWrapper::SpeedTreeWrapperPtr CSpeedTreeWrapper::MakeInstance()
 
 	memcpy(spInstance->m_afPos, m_afPos, 3 * sizeof(float));
 	memcpy(spInstance->m_afBoundingBox, m_afBoundingBox, 6 * sizeof(float));
-
+	spInstance->CalculateBBox();
 	spInstance->m_pInstanceOf = shared_from_this();
 	m_vInstances.push_back(spInstance);
 
@@ -1011,8 +1011,8 @@ void CSpeedTreeWrapper::SetupBranchForTreeType(void) const
 
 	// bind shadow texture
 #ifdef WRAPPER_RENDER_SELF_SHADOWS
-	if (ms_bSelfShadowOn && (lpd3dTexture = m_ShadowImageInstance.GetTextureReference().GetSRV()))
-		STATEMANAGER.SetTexture(1, NULL);
+	if (ms_bSelfShadowOn && !m_ShadowImageInstance.IsEmpty())
+		STATEMANAGER.SetTexture(1, m_ShadowImageInstance.GetTextureReference().GetSRV());
 	else
 		STATEMANAGER.SetTexture(1, NULL);
 #endif
@@ -1089,9 +1089,9 @@ void CSpeedTreeWrapper::SetupFrondForTreeType(void) const
 		STATEMANAGER.SetTexture(0, m_CompositeImageInstance.GetTextureReference().GetSRV());
 
 #ifdef WRAPPER_RENDER_SELF_SHADOWS
-	ID3D11ShaderResourceView* lpd3dTexture;
-
-	if ((lpd3dTexture = m_ShadowImageInstance.GetTextureReference().GetSRV()))
+	if (ms_bSelfShadowOn && !m_ShadowImageInstance.IsEmpty())
+		STATEMANAGER.SetTexture(1, m_ShadowImageInstance.GetTextureReference().GetSRV());
+	else
 		STATEMANAGER.SetTexture(1, NULL);
 #endif
 
@@ -1373,21 +1373,24 @@ void CSpeedTreeWrapper::SetPosition(float x, float y, float z)
 
 bool CSpeedTreeWrapper::GetBoundingSphere(D3DXVECTOR3& v3Center, float& fRadius)
 {
-	float fX, fY, fZ;
+	float fX = m_afBoundingBox[3] - m_afBoundingBox[0];
+	float fY = m_afBoundingBox[4] - m_afBoundingBox[1];
+	float fZ = m_afBoundingBox[5] - m_afBoundingBox[2];
 
-	fX = m_afBoundingBox[3] - m_afBoundingBox[0];
-	fY = m_afBoundingBox[4] - m_afBoundingBox[1];
-	fZ = m_afBoundingBox[5] - m_afBoundingBox[2];
+	if (!_finite(fX) || fX < 0.0f) fX = 0.0f;
+	if (!_finite(fY) || fY < 0.0f) fY = 0.0f;
+	if (!_finite(fZ) || fZ < 0.0f) fZ = 0.0f;
 
-	v3Center.x = 0.0f;
-	v3Center.y = 0.0f;
-	v3Center.z = fZ * 0.5f;
+	v3Center.x = (m_afBoundingBox[0] + m_afBoundingBox[3]) * 0.5f;
+	v3Center.y = (m_afBoundingBox[1] + m_afBoundingBox[4]) * 0.5f;
+	v3Center.z = (m_afBoundingBox[2] + m_afBoundingBox[5]) * 0.5f;
 
-	fRadius = sqrtf(fX * fX + fY * fY + fZ * fZ) * 0.5f * 0.9f; // 0.9f for reduce size
+	fRadius = sqrtf(fX * fX + fY * fY + fZ * fZ) * 0.5f;
 
-	D3DXVECTOR3 vec = m_pSpeedTree->GetTreePosition();
-
-	v3Center += vec;
+	const float* p = m_pSpeedTree->GetTreePosition();
+	v3Center.x += p[0];
+	v3Center.y += p[1];
+	v3Center.z += p[2];
 
 	return true;
 }
