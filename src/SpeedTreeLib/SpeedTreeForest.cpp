@@ -72,31 +72,35 @@ CSpeedTreeForest::SpeedTreeWrapperPtr CSpeedTreeForest::GetMainTree(DWORD dwCRC)
 	return itor->second;
 }
 
-BOOL CSpeedTreeForest::GetMainTree(DWORD dwCRC, SpeedTreeWrapperPtr &ppMainTree, const char * c_pszFileName)
+BOOL CSpeedTreeForest::GetMainTree(DWORD dwCRC, SpeedTreeWrapperPtr& ppMainTree, const char* c_pszFileName)
 {
+	ppMainTree.reset();
+
 	TTreeMap::iterator itor = m_pMainTreeMap.find(dwCRC);
 
-	SpeedTreeWrapperPtr pTree;
-
 	if (itor != m_pMainTreeMap.end())
-		pTree = itor->second;
-	else
 	{
-		TPackFile file;
-
-		if (!CPackManager::Instance().GetFile(c_pszFileName, file))
-			return FALSE;
-
-		pTree = std::make_shared<CSpeedTreeWrapper>();
-
-		if (!pTree->LoadTree(c_pszFileName, (const BYTE *)file.data(), file.size()))
-		{
-			pTree.reset();
-			return FALSE;
-		}
-
-		m_pMainTreeMap.insert(std::map<DWORD, SpeedTreeWrapperPtr>::value_type(dwCRC, pTree));
+		ppMainTree = itor->second;
+		return TRUE;
 	}
+
+	TPackFile file;
+
+	if (!CPackManager::Instance().GetFile(c_pszFileName, file))
+	{
+		TraceError("SpeedTree file missing skipped: %s", c_pszFileName);
+		return TRUE;
+	}
+
+	SpeedTreeWrapperPtr pTree = std::make_shared<CSpeedTreeWrapper>();
+
+	if (!pTree->LoadTree(c_pszFileName, (const BYTE*)file.data(), file.size()))
+	{
+		TraceError("SpeedTree skipped: %s", c_pszFileName);
+		return TRUE;
+	}
+
+	m_pMainTreeMap.insert(TTreeMap::value_type(dwCRC, pTree));
 
 	ppMainTree = pTree;
 	return TRUE;
@@ -105,14 +109,21 @@ BOOL CSpeedTreeForest::GetMainTree(DWORD dwCRC, SpeedTreeWrapperPtr &ppMainTree,
 CSpeedTreeForest::SpeedTreeWrapperPtr CSpeedTreeForest::CreateInstance(float x, float y, float z, DWORD dwTreeCRC, const char* c_szTreeName)
 {
 	SpeedTreeWrapperPtr pMainTree;
+
 	if (!GetMainTree(dwTreeCRC, pMainTree, c_szTreeName))
-	{
 		return NULL;
-	}
+
+	if (!pMainTree)
+		return NULL;
 
 	SpeedTreeWrapperPtr pTreeInst = pMainTree->MakeInstance();
+
+	if (!pTreeInst)
+		return NULL;
+
 	pTreeInst->SetPosition(x, y, z);
 	pTreeInst->RegisterBoundingSphere();
+
 	return pTreeInst;
 }
 

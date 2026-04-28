@@ -49,7 +49,7 @@
 #include "VertexShaders.h"
 #include "qMin32Lib/ConstantBufferManager.h"
 #include "qMin32Lib/DxManager.h"
-
+#include <cmath>
 //
 
 #include <filesystem>
@@ -336,7 +336,6 @@ CSpeedTreeWrapper::~CSpeedTreeWrapper()
 	Clear();
 }
 
-
 ///////////////////////////////////////////////////////////////////////  
 //	CSpeedTreeWrapper::LoadTree
 bool CSpeedTreeWrapper::LoadTree(const char* pszSptFile, const BYTE* c_pbBlock, unsigned int uiBlockSize, UINT nSeed, float fSize, float fSizeVariance)
@@ -388,12 +387,30 @@ bool CSpeedTreeWrapper::LoadTree(const char* pszSptFile, const BYTE* c_pbBlock, 
 
 	m_pSpeedTree->SetNumLeafRockingGroups(3);
 
-	// override the size, if necessary
-	if (fSize >= 0.0f && fSizeVariance >= 0.0f)
-		m_pSpeedTree->SetTreeSize(fSize, fSizeVariance);
+	float fSafeSize = fSize;
+	float fSafeVariance = fSizeVariance;
 
-	// generate tree geometry
-	if (m_pSpeedTree->Compute(NULL, nSeed, false))
+	if (!_finite(fSafeSize) || fSafeSize <= 0.0f)
+		fSafeSize = 1000.0f;
+
+	if (!_finite(fSafeVariance) || fSafeVariance < 0.0f)
+		fSafeVariance = 0.0f;
+
+	if (fSafeVariance >= fSafeSize)
+		fSafeVariance = 0.0f;
+
+	m_pSpeedTree->SetTreeSize(fSafeSize, fSafeVariance);
+
+	UINT nSafeSeed = nSeed ? nSeed : 1;
+
+	bool bComputed = m_pSpeedTree->Compute(NULL, nSafeSeed, false);
+
+	if (!bComputed)
+	{
+		TraceError("SpeedTree skipped: %s", pszSptFile);
+		return false;
+	}
+	if (bComputed)
 	{
 		// get the dimensions
 		m_pSpeedTree->GetBoundingBox(m_afBoundingBox);
@@ -753,6 +770,14 @@ void CSpeedTreeWrapper::SetupFrondBuffers(void)
 
 void CSpeedTreeWrapper::SetupLeafBuffers(void)
 {
+	if (!m_pGeometryCache || m_pGeometryCache->m_nNumLeafLods <= 0 || !m_pGeometryCache->m_pLeaves)
+	{
+		m_usNumLeafLods = 0;
+		m_pLeafVertexBuffer = NULL;
+		m_pLeavesUpdatedByCpu = NULL;
+		return;
+	}
+
 	const short anVertexIndices[6] = { 0, 1, 2, 0, 2, 3 };
 
 	m_usNumLeafLods = (unsigned short)m_pGeometryCache->m_nNumLeafLods;
@@ -765,9 +790,16 @@ void CSpeedTreeWrapper::SetupLeafBuffers(void)
 		m_pLeafVertexBuffer[unLod].reset();
 
 		const CSpeedTreeRT::SGeometry::SLeaf* pLeaf = &m_pGeometryCache->m_pLeaves[unLod];
+
+		if (!pLeaf)
+			continue;
+
 		const int nLeafCount = pLeaf->m_nNumLeaves;
 
-		if (nLeafCount < 1 || !_mgr || !pLeaf->m_pCards || !pLeaf->m_pLeafCardIndices || !pLeaf->m_pCenterCoords)
+		if (nLeafCount < 1)
+			continue;
+
+		if (!_mgr || !pLeaf->m_pCards || !pLeaf->m_pLeafCardIndices || !pLeaf->m_pCenterCoords)
 			continue;
 
 		std::vector<SFVFLeafVertex> vertices(nLeafCount * 12);
@@ -776,7 +808,12 @@ void CSpeedTreeWrapper::SetupLeafBuffers(void)
 		for (int nLeaf = 0; nLeaf < nLeafCount; ++nLeaf)
 		{
 			const float* center = &pLeaf->m_pCenterCoords[nLeaf * 3];
+
 			const int cardIndex = pLeaf->m_pLeafCardIndices[nLeaf];
+
+			if (cardIndex < 0)
+				continue;
+
 			const CSpeedTreeRT::SGeometry::SLeaf::SCard& card = pLeaf->m_pCards[cardIndex];
 
 			for (int side = 0; side < 2; ++side)
@@ -811,6 +848,11 @@ void CSpeedTreeWrapper::SetupLeafBuffers(void)
 			}
 		}
 
+		if (pVertex == vertices.data())
+			continue;
+
+		vertices.resize((size_t)(pVertex - vertices.data()));
+
 		_mgr->CreateVertexBuffer(m_pLeafVertexBuffer[unLod], vertices.data(), (UINT)vertices.size(), sizeof(SFVFLeafVertex));
 	}
 }
@@ -836,59 +878,58 @@ void CSpeedTreeWrapper::Advance(void)
 //	CSpeedTreeWrapper::MakeInstance
 CSpeedTreeWrapper::SpeedTreeWrapperPtr CSpeedTreeWrapper::MakeInstance()
 {
+	if (!m_pSpeedTree)
+		return SpeedTreeWrapperPtr();
+
 	auto spInstance = std::make_shared<CSpeedTreeWrapper>();
 
-	// make an instance of this object's SpeedTree
 	spInstance->m_bIsInstance = true;
 
 	SAFE_DELETE(spInstance->m_pSpeedTree);
+
 	spInstance->m_pSpeedTree = m_pSpeedTree->MakeInstance();
 
-	if (spInstance->m_pSpeedTree)
+	if (!spInstance->m_pSpeedTree)
 	{
-		// use the same materials
-		spInstance->m_cBranchMaterial = m_cBranchMaterial;
-		spInstance->m_cLeafMaterial = m_cLeafMaterial;
-		spInstance->m_cFrondMaterial = m_cFrondMaterial;
-		spInstance->m_CompositeImageInstance.SetImagePointer(m_CompositeImageInstance.GetGraphicImagePointer());
-		spInstance->m_BranchImageInstance.SetImagePointer(m_BranchImageInstance.GetGraphicImagePointer());
-
-		if (!m_ShadowImageInstance.IsEmpty())
-			spInstance->m_ShadowImageInstance.SetImagePointer(m_ShadowImageInstance.GetGraphicImagePointer());
-
-		spInstance->m_pTextureInfo = m_pTextureInfo;
-
-		// use the same geometry cache
-		spInstance->m_pGeometryCache = m_pGeometryCache;
-
-		// use the same buffers
-		spInstance->m_pBranchIndexBuffer = m_pBranchIndexBuffer;
-		spInstance->m_branchStripOffsets = m_branchStripOffsets;
-		spInstance->m_branchStripLengths = m_branchStripLengths;
-		spInstance->m_pBranchVertexBuffer = m_pBranchVertexBuffer;
-		spInstance->m_unBranchVertexCount = m_unBranchVertexCount;
-
-		spInstance->m_pFrondIndexBuffer = m_pFrondIndexBuffer;
-		spInstance->m_frondStripOffsets = m_frondStripOffsets;
-		spInstance->m_frondStripLengths = m_frondStripLengths;
-		spInstance->m_pFrondVertexBuffer = m_pFrondVertexBuffer;
-		spInstance->m_unFrondVertexCount = m_unFrondVertexCount;
-
-		spInstance->m_pLeafVertexBuffer = m_pLeafVertexBuffer;
-		spInstance->m_usNumLeafLods = m_usNumLeafLods;
-		spInstance->m_pLeavesUpdatedByCpu = m_pLeavesUpdatedByCpu;
-
-		// new stuff
-		memcpy(spInstance->m_afPos, m_afPos, 3 * sizeof(float));
-		memcpy(spInstance->m_afBoundingBox, m_afBoundingBox, 6 * sizeof(float));
-		spInstance->m_pInstanceOf = shared_from_this();
-		m_vInstances.push_back(spInstance);
-	}
-	else
-	{
-		fprintf(stderr, "SpeedTreeRT Error: %s\n", m_pSpeedTree->GetCurrentError());
+		TraceError("SpeedTree MakeInstance failed");
 		spInstance.reset();
+		return SpeedTreeWrapperPtr();
 	}
+
+	spInstance->m_cBranchMaterial = m_cBranchMaterial;
+	spInstance->m_cLeafMaterial = m_cLeafMaterial;
+	spInstance->m_cFrondMaterial = m_cFrondMaterial;
+
+	spInstance->m_CompositeImageInstance.SetImagePointer(m_CompositeImageInstance.GetGraphicImagePointer());
+	spInstance->m_BranchImageInstance.SetImagePointer(m_BranchImageInstance.GetGraphicImagePointer());
+
+	if (!m_ShadowImageInstance.IsEmpty())
+		spInstance->m_ShadowImageInstance.SetImagePointer(m_ShadowImageInstance.GetGraphicImagePointer());
+
+	spInstance->m_pTextureInfo = m_pTextureInfo;
+	spInstance->m_pGeometryCache = m_pGeometryCache;
+
+	spInstance->m_pBranchIndexBuffer = m_pBranchIndexBuffer;
+	spInstance->m_branchStripOffsets = m_branchStripOffsets;
+	spInstance->m_branchStripLengths = m_branchStripLengths;
+	spInstance->m_pBranchVertexBuffer = m_pBranchVertexBuffer;
+	spInstance->m_unBranchVertexCount = m_unBranchVertexCount;
+
+	spInstance->m_pFrondIndexBuffer = m_pFrondIndexBuffer;
+	spInstance->m_frondStripOffsets = m_frondStripOffsets;
+	spInstance->m_frondStripLengths = m_frondStripLengths;
+	spInstance->m_pFrondVertexBuffer = m_pFrondVertexBuffer;
+	spInstance->m_unFrondVertexCount = m_unFrondVertexCount;
+
+	spInstance->m_pLeafVertexBuffer = m_pLeafVertexBuffer;
+	spInstance->m_usNumLeafLods = m_usNumLeafLods;
+	spInstance->m_pLeavesUpdatedByCpu = m_pLeavesUpdatedByCpu;
+
+	memcpy(spInstance->m_afPos, m_afPos, 3 * sizeof(float));
+	memcpy(spInstance->m_afBoundingBox, m_afBoundingBox, 6 * sizeof(float));
+
+	spInstance->m_pInstanceOf = shared_from_this();
+	m_vInstances.push_back(spInstance);
 
 	return spInstance;
 }

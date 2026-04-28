@@ -42,3 +42,8 @@ Now instead of PNT_Ps, PNT2_Ps we have Mesh_Ps.
 Only compatible with directx11, the next step is to create shaders with the manager.
 Update SpeedTree to Directx11 full.
 /////////////////////////////             /////////////////////////////
+
+//////////////// SpeedTree Fix part 2 ////////////////
+Added SpeedTree 4.1 source fixed.
+Fixed SpeedTree client crash bug.
+/////////////////////////////             /////////////////////////////
