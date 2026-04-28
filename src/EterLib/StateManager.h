@@ -273,8 +273,6 @@ public:
 
 		m_dwPixelShader = 0;
 		m_dwVertexShader = 0;
-		m_dwVertexDeclaration = 0;
-		m_dwFVF = D3DFVF_XYZ;
 		m_bVertexProcessing = FALSE;
 	}
 
@@ -286,8 +284,6 @@ public:
 
 	LPDIRECT3DPIXELSHADER9  m_dwPixelShader;
 	LPDIRECT3DVERTEXSHADER9 m_dwVertexShader;
-	LPDIRECT3DVERTEXDECLARATION9 m_dwVertexDeclaration;
-	DWORD					m_dwFVF;
 
 	D3DXMATRIX				m_Matrices[SM_MAX_TRANSFORMS];
 
@@ -345,36 +341,11 @@ public:
 	void	SetSamplerState(DWORD dwStage, ESamplerStateType11 Type, DWORD dwValue);
 	void	GetSamplerState(DWORD dwStage, ESamplerStateType11 Type, DWORD* pdwValue);
 
-	void	SaveVertexShader(LPDIRECT3DVERTEXSHADER9 dwShader);
-	void	RestoreVertexShader();
-	void	SetVertexShader(LPDIRECT3DVERTEXSHADER9 dwShader);
-	void	GetVertexShader(LPDIRECT3DVERTEXSHADER9* pdwShader);
-
-	void	SaveVertexDeclaration(LPDIRECT3DVERTEXDECLARATION9 dwShader);
-	void	RestoreVertexDeclaration();
-	void	SetVertexDeclaration(LPDIRECT3DVERTEXDECLARATION9 dwShader);
-	void	GetVertexDeclaration(LPDIRECT3DVERTEXDECLARATION9* pdwShader);
-
-	void	SaveFVF(DWORD dwShader);
-	void	RestoreFVF();
-	void	SetFVF(DWORD dwShader);
-	void	GetFVF(DWORD* pdwShader);
-
-	void	SavePixelShader(LPDIRECT3DPIXELSHADER9 dwShader);
-	void	RestorePixelShader();
-	void	SetPixelShader(LPDIRECT3DPIXELSHADER9 dwShader);
-	void	GetPixelShader(LPDIRECT3DPIXELSHADER9* pdwShader);
 
 	void SaveTransform(ETransform slot, const D3DXMATRIX* pMatrix);
 	void RestoreTransform(ETransform slot);
 	void SetTransform(ETransform slot, const D3DXMATRIX* pMatrix);
 	void GetTransform(ETransform slot, D3DXMATRIX* pOut);
-
-	void SaveVertexProcessing(BOOL IsON);
-	void RestoreVertexProcessing();
-
-	void SetVertexShaderConstant(DWORD dwRegister, CONST void* pConstantData, DWORD dwConstantCount);
-	void SetPixelShaderConstant(DWORD dwRegister, CONST void* pConstantData, DWORD dwConstantCount);
 
 	void SaveStreamSource(UINT StreamNumber, ID3D11Buffer* pStreamData, UINT Stride);
 	void RestoreStreamSource(UINT StreamNumber);
@@ -384,11 +355,9 @@ public:
 	void RestoreIndices();
 	void SetIndices(ID3D11Buffer* pIndexData, UINT BaseVertexIndex);
 
-	HRESULT DrawPrimitive(D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT PrimitiveCount);
-	HRESULT DrawPrimitiveUP(D3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, const void* pVertexStreamZeroData, UINT VertexStreamZeroStride);
-	HRESULT DrawIndexedPrimitive(D3DPRIMITIVETYPE PrimitiveType, UINT minIndex, UINT NumVertices, UINT startIndex, UINT primCount);
-	HRESULT DrawIndexedPrimitive(D3DPRIMITIVETYPE PrimitiveType, INT baseVertexIndex, UINT minIndex, UINT NumVertices, UINT startIndex, UINT primCount);
-	HRESULT DrawIndexedPrimitiveUP(D3DPRIMITIVETYPE PrimitiveType, UINT MinVertexIndex, UINT NumVertexIndices, UINT PrimitiveCount, CONST void* pIndexData, D3DFORMAT IndexDataFormat, CONST void* pVertexStreamZeroData, UINT VertexStreamZeroStride);
+	HRESULT DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY Topology, UINT PrimitiveCount, UINT StartVertex_VertexStride, const void* pVertexData = nullptr);
+	HRESULT DrawIndexedPrimitive11(D3D11_PRIMITIVE_TOPOLOGY Topology, INT BaseVertexIndex, UINT StartIndex, UINT PrimitiveCount);
+	HRESULT DrawTriangleFan11(UINT PrimitiveCount, const void* pVertexData, UINT VertexStride);
 
 	DWORD GetRenderState(ERenderState11 Type);
 
@@ -419,10 +388,6 @@ private:
 	std::vector<D3DXMATRIX>					m_TransformStack[SM_MAX_TRANSFORMS];
 	std::vector<ID3D11ShaderResourceView*>	m_TextureStack[STATEMANAGER_MAX_STAGES];
 	std::vector<D3DMATERIAL9>				m_MaterialStack;
-	std::vector<DWORD>						m_FVFStack;
-	std::vector<LPDIRECT3DPIXELSHADER9>		m_PixelShaderStack;
-	std::vector<LPDIRECT3DVERTEXSHADER9>	m_VertexShaderStack;
-	std::vector<LPDIRECT3DVERTEXDECLARATION9> m_VertexDeclarationStack;
 	std::vector<BOOL>						m_VertexProcessingStack;
 	std::vector<CStreamData>				m_StreamStack[STATEMANAGER_MAX_STREAMS];
 	std::vector<CIndexData>					m_IndexStack;

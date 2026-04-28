@@ -91,8 +91,7 @@ bool CSkyObjectQuad::Update()
 void CSkyObjectQuad::Render()
 {
 	if (CGraphicBase::SetPDTStream(m_Vertex, 4))
-		STATEMANAGER.DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-	//STATEMANAGER.DrawIndexedPrimitiveUP(D3DPT_TRIANGLESTRIP, 0, 4, 2, m_Indices, D3DFMT_INDEX16, &m_Vertex, sizeof(TPDTVertex));
+		STATEMANAGER.DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, 2, 0);
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -342,10 +342,10 @@ namespace NParticleRenderer
 		inline void operator () (CParticleInstance * pInstance)
 		{
 			pInstance->Transform(pmat,D3DXToRadian(-30.0f));
-			STATEMANAGER.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, pInstance->GetParticleMeshPointer(), sizeof(TPTVertex));
+			STATEMANAGER.DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, 2, sizeof(TPTVertex), pInstance->GetParticleMeshPointer());
 
 			pInstance->Transform(pmat,D3DXToRadian(+30.0f));
-			STATEMANAGER.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, pInstance->GetParticleMeshPointer(), sizeof(TPTVertex));
+			STATEMANAGER.DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, 2, sizeof(TPTVertex), pInstance->GetParticleMeshPointer());
 		}
 	};
 	
@@ -360,11 +360,11 @@ namespace NParticleRenderer
 		inline void operator () (CParticleInstance * pInstance)
 		{
 			pInstance->Transform(pmat);
-			STATEMANAGER.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, pInstance->GetParticleMeshPointer(), sizeof(TPTVertex));
+			STATEMANAGER.DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, 2, sizeof(TPTVertex), pInstance->GetParticleMeshPointer());
 			pInstance->Transform(pmat,D3DXToRadian(-60.0f));
-			STATEMANAGER.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, pInstance->GetParticleMeshPointer(), sizeof(TPTVertex));
+			STATEMANAGER.DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, 2, sizeof(TPTVertex), pInstance->GetParticleMeshPointer());
 			pInstance->Transform(pmat,D3DXToRadian(+60.0f));
-			STATEMANAGER.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, pInstance->GetParticleMeshPointer(), sizeof(TPTVertex));
+			STATEMANAGER.DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, 2, sizeof(TPTVertex), pInstance->GetParticleMeshPointer());
 		}
 	};
 	
@@ -373,7 +373,7 @@ namespace NParticleRenderer
 		inline void operator () (CParticleInstance * pInstance)
 		{
 			pInstance->Transform();
-			STATEMANAGER.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, pInstance->GetParticleMeshPointer(), sizeof(TPTVertex));
+			STATEMANAGER.DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, 2, sizeof(TPTVertex), pInstance->GetParticleMeshPointer());
 		}
 	};
 	struct AttachRenderer
@@ -387,7 +387,7 @@ namespace NParticleRenderer
 		inline void operator () (CParticleInstance * pInstance)
 		{
 			pInstance->Transform(pmat);
-			STATEMANAGER.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, pInstance->GetParticleMeshPointer(), sizeof(TPTVertex));
+			STATEMANAGER.DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, 2, sizeof(TPTVertex), pInstance->GetParticleMeshPointer());
 		}
 	};
 }

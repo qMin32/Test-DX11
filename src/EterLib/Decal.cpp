@@ -230,13 +230,10 @@ void CDecal::Render()
 	_mgr->SetShader(VF_PDT);
 
 	for (DWORD dwi = 0; dwi < m_TriangleFanStructVector.size(); ++dwi)
-		STATEMANAGER.DrawIndexedPrimitiveUP(D3DPT_TRIANGLEFAN,
-		m_TriangleFanStructVector[dwi].m_wMinIndex,
-		m_TriangleFanStructVector[dwi].m_dwVertexCount,
-		m_TriangleFanStructVector[dwi].m_dwPrimitiveCount,
-		m_Indices + m_TriangleFanStructVector[dwi].m_wMinIndex,
-		D3DFMT_INDEX16,
-		m_Vertices,
-		sizeof(TPDTVertex));
+		STATEMANAGER.DrawTriangleFan11(
+			m_TriangleFanStructVector[dwi].m_dwPrimitiveCount,
+			m_Vertices + m_TriangleFanStructVector[dwi].m_wMinIndex,
+			sizeof(TPDTVertex)
+		);
 }
 

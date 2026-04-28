@@ -948,7 +948,7 @@ void CGraphicTextInstance::Render(RECT * pClipRect)
 			STATEMANAGER.SetTexture(0, NULL);
 			CGraphicBase::SetDefaultIndexBuffer(CGraphicBase::DEFAULT_IB_FILL_RECT);
 			if (CGraphicBase::SetPDTStream(vertices, 4))
-				STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 4, 0, 2);
+				STATEMANAGER.DrawIndexedPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 0, 0, 2);
 		}
 	}
 
@@ -967,9 +967,7 @@ void CGraphicTextInstance::Render(RECT * pClipRect)
 			STATEMANAGER.SetTextureStageState(0, TSS11_COLORARG1, TA11_TEXTURE);
 			STATEMANAGER.SetTextureStageState(0, TSS11_ALPHAOP, TOP11_SELECTARG1);
 			STATEMANAGER.SetTextureStageState(0, TSS11_ALPHAARG1, TA11_TEXTURE);
-			STATEMANAGER.DrawPrimitiveUP(D3DPT_TRIANGLELIST,
-				vtxBatch.size() / 3, vtxBatch.data(), sizeof(SVertex));
-
+			STATEMANAGER.DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, (UINT)vtxBatch.size() / 3, sizeof(SVertex), vtxBatch.data());
 			if (!skipPass2) {
 				// Pass 2: dest.rgb += textColor.rgb * coverage.rgb
 				STATEMANAGER.SetRenderState(RS11_SRCBLEND, D3D11_BLEND_ONE);
@@ -980,8 +978,7 @@ void CGraphicTextInstance::Render(RECT * pClipRect)
 				STATEMANAGER.SetTextureStageState(0, TSS11_ALPHAOP, TOP11_MODULATE);
 				STATEMANAGER.SetTextureStageState(0, TSS11_ALPHAARG1, TA11_TEXTURE);
 				STATEMANAGER.SetTextureStageState(0, TSS11_ALPHAARG2, TA11_DIFFUSE);
-				STATEMANAGER.DrawPrimitiveUP(D3DPT_TRIANGLELIST,
-					vtxBatch.size() / 3, vtxBatch.data(), sizeof(SVertex));
+				STATEMANAGER.DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, (UINT)vtxBatch.size() / 3, sizeof(SVertex), vtxBatch.data());
 			}
 		}
 	};
@@ -1071,7 +1068,7 @@ void CGraphicTextInstance::Render(RECT * pClipRect)
 
 		CGraphicBase::SetDefaultIndexBuffer(CGraphicBase::DEFAULT_IB_FILL_RECT);
 		if (CGraphicBase::SetPDTStream(vertices, 4))
-			STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 4, 0, 2);
+			STATEMANAGER.DrawIndexedPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 0, 0, 2);
 
 		int ulbegin = CIME::GetULBegin();
 		int ulend = CIME::GetULEnd();
@@ -1095,7 +1092,7 @@ void CGraphicTextInstance::Render(RECT * pClipRect)
 			vertices[2].position = TPosition(sx, ey, 0.0f);
 			vertices[3].position = TPosition(ex, ey, 0.0f);
 
-			STATEMANAGER.DrawIndexedPrimitiveUP(D3DPT_TRIANGLELIST, 0, 4, 2, c_FillRectIndices, D3DFMT_INDEX16, vertices, sizeof(TPDTVertex));
+			STATEMANAGER.DrawIndexedPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 0, 0, 2);
 		}
 	}
 

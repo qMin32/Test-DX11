@@ -124,9 +124,8 @@ void CGraphicExpandedImageInstance::OnRender()
 		STATEMANAGER.SetTexture(0, pTexture->GetSRV());
 		STATEMANAGER.SetTexture(1, NULL);
 		_mgr->SetShader(VF_PDT);
-		STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 4, 0, 2);
+		STATEMANAGER.DrawIndexedPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 0, 0, 2);
 	}
-	//STATEMANAGER.DrawIndexedPrimitiveUP(D3DPT_TRIANGLELIST, 0, 4, 2, c_FillRectIndices, D3DFMT_INDEX16, vertices, sizeof(TPDTVertex));
 	/////////////////////////////////////////////////////////////
 
 	switch (m_iRenderingMode)

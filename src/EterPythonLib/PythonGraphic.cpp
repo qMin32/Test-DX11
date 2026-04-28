@@ -308,11 +308,11 @@ void CPythonGraphic::RenderAlphaImage(CGraphicImageInstance* pImageInstance, flo
 	vertices[3].diffuse = DiffuseColor2;
 	vertices[3].texCoord = TTextureCoordinate(eu, ev);
 
-	STATEMANAGER.SetVertexDeclaration(ms_pntVS);
+	_mgr->SetShader(VF_MESH);
 	// 2004.11.18.myevan.DrawIndexPrimitiveUP -> DynamicVertexBuffer
 	CGraphicBase::SetDefaultIndexBuffer(DEFAULT_IB_FILL_RECT);
 	if (CGraphicBase::SetPDTStream(vertices, 4))
-		STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 4, 0, 2);
+		STATEMANAGER.DrawIndexedPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 0, 0, 2);
 }
 
 void CPythonGraphic::RenderCoolTimeBox(float fxCenter, float fyCenter, float fRadius, float fTime)
@@ -387,7 +387,7 @@ void CPythonGraphic::RenderCoolTimeBox(float fxCenter, float fyCenter, float fRa
 		STATEMANAGER.SetTexture(0, NULL);
 		STATEMANAGER.SetTexture(1, NULL);
 		_mgr->SetShader(VF_PDT);
-		STATEMANAGER.DrawPrimitive(D3DPT_TRIANGLELIST, 0, iTriCount);
+		STATEMANAGER.DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, iTriCount, 0);
 		STATEMANAGER.RestoreTextureStageState(0, TSS11_COLORARG1);
 		STATEMANAGER.RestoreTextureStageState(0, TSS11_COLOROP);
 		STATEMANAGER.RestoreTextureStageState(0, TSS11_ALPHAARG1);

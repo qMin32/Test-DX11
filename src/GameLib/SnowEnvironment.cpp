@@ -133,8 +133,9 @@ void CSnowEnvironment::__ApplyBlur()
 							BlurVertex(D3DXVECTOR3(0.0f,sy,0.0f),1.0f	,0xFFFFFF, 0,1) ,
 							BlurVertex(D3DXVECTOR3(sx,sy,0.0f),1.0f		,0xFFFFFF, 1,1) };
 
-		STATEMANAGER.SetFVF( D3DFVF_XYZRHW | D3DFVF_DIFFUSE|D3DFVF_TEX1 );
-		STATEMANAGER.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP,2,V,sizeof(BlurVertex));
+		_mgr->SetShader(VF_SCREEN);
+
+		STATEMANAGER.DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, 2, sizeof(BlurVertex), V);
 	}
 }
 
@@ -189,7 +190,7 @@ void CSnowEnvironment::Render()
 	_mgr->SetIndexBuffer(m_pIB);
 	_mgr->SetShader(VF_PT);
 	_mgr->SetVertexBuffer(m_pVB);
-	STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, dwParticleCount*4, 0, dwParticleCount*2);
+	STATEMANAGER.DrawIndexedPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 0, 0, dwParticleCount * 2);
 	STATEMANAGER.RestoreRenderState(RS11_ALPHABLENDENABLE);
 	STATEMANAGER.RestoreRenderState(RS11_ZWRITEENABLE);
 	STATEMANAGER.RestoreRenderState(RS11_CULLMODE);

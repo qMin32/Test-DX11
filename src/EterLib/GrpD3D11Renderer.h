@@ -108,7 +108,6 @@ public:
 
 	// Vertex format → selects shader + input layout
 	void SetVertexFormat(ED3D11VertexFormat eFormat);
-	ED3D11VertexFormat DetectVertexFormat(DWORD dwFVF);
 	ED3D11VertexFormat GetCurrentFormat() const { return m_eCurrentFormat; }
 
 	// Sampler state

@@ -34,7 +34,7 @@ void CScreen::RenderLine3d(float sx, float sy, float sz, float ex, float ey, flo
 		STATEMANAGER.SetTexture(0, NULL);
 		STATEMANAGER.SetTexture(1, NULL);
 		_mgr->SetShader(VF_PDT);
-		STATEMANAGER.DrawPrimitive(D3DPT_LINELIST, 0, 1);
+		STATEMANAGER.DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_LINELIST, 1, 0);
 	}
 }
 
@@ -66,7 +66,7 @@ void CScreen::RenderBox3d(float sx, float sy, float sz, float ex, float ey, floa
 		STATEMANAGER.SetTexture(0, NULL);
 		STATEMANAGER.SetTexture(1, NULL);
 		_mgr->SetShader(VF_PDT);
-		STATEMANAGER.DrawPrimitive(D3DPT_LINELIST, 0, 4);
+		STATEMANAGER.DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_LINELIST, 4, 0);
 	}
 }
 
@@ -89,7 +89,7 @@ void CScreen::RenderBar3d(float sx, float sy, float sz, float ex, float ey, floa
 		STATEMANAGER.SetTexture(0, NULL);
 		STATEMANAGER.SetTexture(1, NULL);
 		_mgr->SetShader(VF_PDT);
-		STATEMANAGER.DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+		STATEMANAGER.DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, 2, 0);
 	}
 }
 
@@ -111,7 +111,7 @@ void CScreen::RenderBar3d(const D3DXVECTOR3 * c_pv3Positions)
 		STATEMANAGER.SetTexture(0, NULL);
 		STATEMANAGER.SetTexture(1, NULL);
 		_mgr->SetShader(VF_PDT);
-		STATEMANAGER.DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+		STATEMANAGER.DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, 2, 0);
 	}
 }
 
@@ -134,7 +134,7 @@ void CScreen::RenderGradationBar3d(float sx, float sy, float sz, float ex, float
 		STATEMANAGER.SetTexture(0, NULL);
 		STATEMANAGER.SetTexture(1, NULL);
 		_mgr->SetShader(VF_PDT);
-		STATEMANAGER.DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+		STATEMANAGER.DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, 2, 0);
 	}
 }
 
@@ -161,7 +161,7 @@ void CScreen::RenderLineCube(float sx, float sy, float sz, float ex, float ey, f
 		STATEMANAGER.SetTransform(World, ms_lpd3dMatStack->GetTop());
 		SetDefaultIndexBuffer(DEFAULT_IB_LINE_CUBE);
 
-		STATEMANAGER.DrawIndexedPrimitive(D3DPT_LINELIST, 0, 8, 0, 4*3);
+		STATEMANAGER.DrawIndexedPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_LINELIST, 0, 0, 4 * 3);
 	}
 }
 
@@ -188,7 +188,7 @@ void CScreen::RenderCube(float sx, float sy, float sz, float ex, float ey, float
 		STATEMANAGER.SetTransform(World, ms_lpd3dMatStack->GetTop());
 
 		SetDefaultIndexBuffer(DEFAULT_IB_FILL_CUBE);
-		STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 8, 0, 4*3);
+		STATEMANAGER.DrawIndexedPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 0, 0, 4 * 3);
 	}
 }
 
@@ -226,7 +226,7 @@ void CScreen::RenderCube(float sx, float sy, float sz, float ex, float ey, float
 		STATEMANAGER.SetTransform(World, ms_lpd3dMatStack->GetTop());
 
 		SetDefaultIndexBuffer(DEFAULT_IB_FILL_CUBE);
-		STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 8, 0, 4*3);
+		STATEMANAGER.DrawIndexedPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 0, 0, 4 * 3);
 	}
 }
 
@@ -398,11 +398,9 @@ void CScreen::RenderTextureBox(float sx, float sy, float ex, float ey, float z, 
 
 			_mgr->SetShader(VF_PDT);
 
-	// 2004.11.18.myevan.DrawIndexPrimitiveUP -> DynamicVertexBuffer
 	SetDefaultIndexBuffer(DEFAULT_IB_FILL_RECT);
 	if (SetPDTStream(vertices, 4))
-		STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 4, 0, 2);
-	//OLD: STATEMANAGER.DrawIndexedPrimitiveUP(D3DPT_TRIANGLELIST, 0, 4, 2, &ms_fillRectIdxVector[0], D3DFMT_INDEX16, vertices, sizeof(TPDTVertex));
+		STATEMANAGER.DrawIndexedPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 0, 0, 2);
 }
 
 
@@ -429,11 +427,9 @@ void CScreen::RenderBillboard(D3DXVECTOR3 * Position, D3DXCOLOR & Color)
 	
 			_mgr->SetShader(VF_PDT);
 
-	// 2004.11.18.myevan.DrawIndexPrimitiveUP -> DynamicVertexBuffer
 	SetDefaultIndexBuffer(DEFAULT_IB_FILL_RECT);
 	if (SetPDTStream(vertices, 4))
-		STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 4, 0, 2);
-	//OLD: STATEMANAGER.DrawIndexedPrimitiveUP(D3DPT_TRIANGLELIST, 0, 4, 2, &ms_fillRectIdxVector[0], D3DFMT_INDEX16, vertices, sizeof(TPDTVertex));
+		STATEMANAGER.DrawIndexedPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 0, 0, 2);
 }
 
 void CScreen::DrawMinorGrid(float xMin, float yMin, float xMax, float yMax, float xminorStep, float yminorStep, float zPos)

@@ -613,17 +613,17 @@ void CMapOutdoor::RenderPCBlocker()
 	}
 }
 
-void CMapOutdoor::SelectIndexBuffer(BYTE byLODLevel, WORD * pwPrimitiveCount, D3DPRIMITIVETYPE * pePrimitiveType)
+void CMapOutdoor::SelectIndexBuffer(BYTE byLODLevel, WORD * pwPrimitiveCount, D3D11_PRIMITIVE_TOPOLOGY * pePrimitiveType)
 {
 	if (0 == byLODLevel)
 	{
 		*pwPrimitiveCount = m_wNumIndices[byLODLevel] - 2;
-		*pePrimitiveType = D3DPT_TRIANGLESTRIP;
+		*pePrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
 	}
 	else
 	{
 		*pwPrimitiveCount =  m_wNumIndices[byLODLevel]/3;
-		*pePrimitiveType = D3DPT_TRIANGLELIST;
+		*pePrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	}
 	_mgr->SetIndexBuffer(m_IndexBuffer[byLODLevel]);
 }
@@ -708,7 +708,7 @@ struct FPatchNumMatch
 	}
 };
 
-void CMapOutdoor::NEW_DrawWireFrame(CTerrainPatchProxy * pTerrainPatchProxy, WORD wPrimitiveCount, D3DPRIMITIVETYPE ePrimitiveType)
+void CMapOutdoor::NEW_DrawWireFrame(CTerrainPatchProxy * pTerrainPatchProxy, WORD wPrimitiveCount, D3D11_PRIMITIVE_TOPOLOGY ePrimitiveType)
 {
 	DWORD dwFillMode = STATEMANAGER.GetRenderState(RS11_FILLMODE);
 	STATEMANAGER.SetRenderState(RS11_FILLMODE, D3D11_FILL_WIREFRAME);
@@ -720,8 +720,7 @@ void CMapOutdoor::NEW_DrawWireFrame(CTerrainPatchProxy * pTerrainPatchProxy, WOR
 	STATEMANAGER.SetTexture(1, NULL);
 	STATEMANAGER.SetTextureStageState(0, TSS11_COLOROP, TOP11_DISABLE);
 	
-	STATEMANAGER.DrawIndexedPrimitive(ePrimitiveType, 0, m_iPatchTerrainVertexCount, 0, wPrimitiveCount);
-	
+	STATEMANAGER.DrawIndexedPrimitive11(ePrimitiveType, 0, 0, wPrimitiveCount);
 	STATEMANAGER.SetRenderState(RS11_FILLMODE, dwFillMode);
 	STATEMANAGER.SetRenderState(RS11_FOGENABLE, dwFogEnable);
 	
@@ -730,7 +729,7 @@ void CMapOutdoor::NEW_DrawWireFrame(CTerrainPatchProxy * pTerrainPatchProxy, WOR
 	STATEMANAGER.SetTextureStageState(0, TSS11_COLOROP,   TOP11_MODULATE);	
 }
 
-void CMapOutdoor::DrawWireFrame(long patchnum, WORD wPrimitiveCount, D3DPRIMITIVETYPE ePrimitiveType)
+void CMapOutdoor::DrawWireFrame(long patchnum, WORD wPrimitiveCount, D3D11_PRIMITIVE_TOPOLOGY ePrimitiveType)
 {
 	assert(NULL!=m_pTerrainPatchProxyList && "CMapOutdoor::DrawWireFrame");
 
@@ -756,7 +755,7 @@ void CMapOutdoor::DrawWireFrame(long patchnum, WORD wPrimitiveCount, D3DPRIMITIV
 	STATEMANAGER.SetTexture(1, NULL);
 	STATEMANAGER.SetTextureStageState(0, TSS11_COLOROP, TOP11_DISABLE);
 
-	STATEMANAGER.DrawIndexedPrimitive(ePrimitiveType, 0, m_iPatchTerrainVertexCount, 0, wPrimitiveCount);
+	STATEMANAGER.DrawIndexedPrimitive11(ePrimitiveType, 0, 0, wPrimitiveCount);
 
 	STATEMANAGER.SetRenderState(RS11_FILLMODE, dwFillMode);
 	STATEMANAGER.SetRenderState(RS11_FOGENABLE, dwFogEnable);
@@ -777,7 +776,7 @@ void CMapOutdoor::RenderMarkedArea()
 	STATEMANAGER.SetTransform(World, &m_matWorldForCommonUse);
 
 	WORD wPrimitiveCount;
-	D3DPRIMITIVETYPE eType;
+	D3D11_PRIMITIVE_TOPOLOGY eType;
 	SelectIndexBuffer(0, &wPrimitiveCount, &eType);
 
 	D3DXMATRIX matTexTransform, matTexTransformTemp;
@@ -905,5 +904,5 @@ void CMapOutdoor::DrawPatchAttr(long patchnum)
 	_mgr->SetShader(VF_PN);
 
 	_mgr->SetVertexBuffer(pTerrainPatchProxy->HardwareTransformPatch_GetVertexBufferPtr());
-	STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLESTRIP, 0, m_iPatchTerrainVertexCount, 0, m_wNumIndices[0] - 2);
+	STATEMANAGER.DrawIndexedPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, 0, 0, m_wNumIndices[0] - 2);
 }

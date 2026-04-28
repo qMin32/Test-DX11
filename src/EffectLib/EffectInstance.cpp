@@ -91,8 +91,7 @@ void CEffectInstance::OnUpdate()
 
 void CEffectInstance::OnRender()
 {
-	STATEMANAGER.SetFVF(D3DFVF_XYZ | D3DFVF_TEX1);
-
+	_mgr->SetShader(VF_PT);
 	STATEMANAGER.SaveSamplerState(0, SS11_MINFILTER, TF11_NONE);
 	STATEMANAGER.SaveSamplerState(0, SS11_MAGFILTER, TF11_NONE);
 

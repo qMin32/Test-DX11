@@ -144,31 +144,6 @@ void CD3D11Renderer::SetVertexFormat(ED3D11VertexFormat eFormat)
 	_mgr->SetShader(eFormat);
 }
 
-ED3D11VertexFormat CD3D11Renderer::DetectVertexFormat(DWORD dwFVF)
-{
-	// D3DFVF_XYZRHW = pre-transformed
-	if (dwFVF & D3DFVF_XYZRHW)
-		return VF_SCREEN;
-
-	bool hasNormal = (dwFVF & D3DFVF_NORMAL) != 0;
-	bool hasDiffuse = (dwFVF & D3DFVF_DIFFUSE) != 0;
-	int texCount = (dwFVF & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT;
-
-	if (hasNormal)
-		return VF_PN;
-	if (hasDiffuse && texCount >= 2)
-		return VF_PDT2;
-	if (hasDiffuse && texCount >= 1)
-		return VF_PDT;
-	if (hasDiffuse)
-		return VF_PD;
-	if (texCount >= 1)
-		return VF_PT;	// Position + TexCoord (no normal, no diffuse)
-
-	// Default
-	return VF_PDT;
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // Blend state
 ///////////////////////////////////////////////////////////////////////////////

@@ -1054,7 +1054,7 @@ void CSpeedTreeWrapper::RenderBranches(void) const
 		if (stripLength > 2)
 		{
 			ms_faceCount += stripLength - 2;
-			STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLESTRIP, 0, m_pGeometryCache->m_sBranches.m_nNumVertices, m_branchStripOffsets[s], stripLength - 2);
+			STATEMANAGER.DrawIndexedPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, 0, m_branchStripOffsets[s], stripLength - 2);
 		}
 	}
 }
@@ -1130,7 +1130,7 @@ void CSpeedTreeWrapper::RenderFronds(void) const
 		if (stripLength > 2)
 		{
 			ms_faceCount += stripLength - 2;
-			STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLESTRIP, 0, m_pGeometryCache->m_sFronds.m_nNumVertices, m_frondStripOffsets[s], stripLength - 2);
+			STATEMANAGER.DrawIndexedPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, 0, m_frondStripOffsets[s], stripLength - 2);
 		}
 	}
 }
@@ -1204,7 +1204,7 @@ void CSpeedTreeWrapper::RenderLeaves(void) const
 	STATEMANAGER.SetRenderState(RS11_ALPHAREF, c_nDefaultAlphaTestValue);
 
 	ms_faceCount += pLeaf->m_nNumLeaves * 4;
-	STATEMANAGER.DrawPrimitive(D3DPT_TRIANGLELIST, 0, pLeaf->m_nNumLeaves * 4);
+	STATEMANAGER.DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, (pLeaf->m_nNumLeaves * 4), 0);
 }
 
 
@@ -1260,11 +1260,11 @@ void CSpeedTreeWrapper::RenderBillboards(void) const
 			{ pCoords[9], pCoords[10], pCoords[11], pTexCoords[6], pTexCoords[7] },
 		};
 
-		STATEMANAGER.SetFVF(D3DFVF_XYZ | D3DFVF_TEX1);
+		_mgr->SetShader(VF_PT);
 		STATEMANAGER.SetRenderState(RS11_ALPHAREF, DWORD(bb.m_afAlphaTestValues[pass]));
 
 		ms_faceCount += 2;
-		STATEMANAGER.DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, sVertex, sizeof(SBillboardVertex));
+		STATEMANAGER.DrawTriangleFan11(2, sVertex, sizeof(SBillboardVertex));
 	}
 
 #ifdef WRAPPER_RENDER_HORIZONTAL_BILLBOARD

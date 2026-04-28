@@ -242,7 +242,7 @@ void CGrannyModelInstance::RenderMeshNodeListWithOneTexture(CGrannyMesh::EType e
 			}
 
 			rkMtrl.ApplyRenderState();
-			STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLELIST, vtxMeshBasePos, 0, vtxCount, pTriGroupNode->idxPos, pTriGroupNode->triCount);
+			STATEMANAGER.DrawIndexedPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vtxMeshBasePos, pTriGroupNode->idxPos, pTriGroupNode->triCount);
 			rkMtrl.RestoreRenderState();
 			
 			pTriGroupNode = pTriGroupNode->pNextTriGroupNode;
@@ -281,7 +281,7 @@ void CGrannyModelInstance::RenderMeshNodeListWithTwoTexture(CGrannyMesh::EType e
 			const CGrannyMaterial& rkMtrl=m_kMtrlPal.GetMaterialRef(pTriGroupNode->mtrlIndex);
 			STATEMANAGER.SetTexture(0, rkMtrl.GetSRV(0));
 			STATEMANAGER.SetTexture(1, rkMtrl.GetSRV(1));
-			STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLELIST, vtxMeshBasePos, 0, vtxCount, pTriGroupNode->idxPos, pTriGroupNode->triCount);
+			STATEMANAGER.DrawIndexedPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vtxMeshBasePos, pTriGroupNode->idxPos, pTriGroupNode->triCount);
 			pTriGroupNode = pTriGroupNode->pNextTriGroupNode;
 		}
 
@@ -315,7 +315,7 @@ void CGrannyModelInstance::RenderMeshNodeListWithoutTexture(CGrannyMesh::EType e
 		while (pTriGroupNode)
 		{
 			ms_faceCount += pTriGroupNode->triCount;
-			STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLELIST, vtxMeshBasePos, 0, vtxCount, pTriGroupNode->idxPos, pTriGroupNode->triCount);
+			STATEMANAGER.DrawIndexedPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vtxMeshBasePos, pTriGroupNode->idxPos, pTriGroupNode->triCount);
 			pTriGroupNode = pTriGroupNode->pNextTriGroupNode;
 		}
 

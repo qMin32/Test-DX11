@@ -268,7 +268,7 @@ void CFlyTrace::Render()
 
 	for(TFlyVertexSetVector::iterator it = VSVector.begin();it!=VSVector.end();++it)
 	{
-		STATEMANAGER.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 4, it->second.v, sizeof(TVertex));
+		STATEMANAGER.DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, 4, sizeof(TVertex), it->second.v);
 	}
 	STATEMANAGER.RestoreRenderState(RS11_DESTBLEND);
 	STATEMANAGER.RestoreRenderState(RS11_SRCBLEND);

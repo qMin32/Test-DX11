@@ -54,14 +54,14 @@ void CGrannyMesh::LoadVertices(void* dstBaseVertices)
 
 	if (IsPNT2())
 	{
-		dstVertices = ((TPNT2Vertex*)dstBaseVertices) + m_vtxBasePos;
+		TPNT2Vertex* dstVertices = ((TPNT2Vertex*)dstBaseVertices) + m_vtxBasePos;
+		GrannyCopyMeshVertices(pgrnMesh, GrannyPNT3322VertexType, dstVertices);
 	}
 	else
 	{
-		dstVertices = ((TPNTVertex*)dstBaseVertices) + m_vtxBasePos;
+		TPNTVertex* dstVertices = ((TPNTVertex*)dstBaseVertices) + m_vtxBasePos;
+		GrannyCopyMeshVertices(pgrnMesh, m_pgrnMeshType, dstVertices);
 	}
-
-	GrannyCopyMeshVertices(pgrnMesh, m_pgrnMeshType, dstVertices);
 }
 
 void CGrannyMesh::LoadSkinnedVertices(void* dstBaseVertices, bool pnt2)

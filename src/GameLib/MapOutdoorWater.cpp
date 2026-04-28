@@ -145,7 +145,7 @@ void CMapOutdoor::DrawWater(long patchnum)
 	_mgr->SetShader(VF_PD);
 	_mgr->SetVertexBuffer(pkVB);
 
-	STATEMANAGER.DrawPrimitive(D3DPT_TRIANGLELIST, 0, uPriCount);
+	STATEMANAGER.DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, uPriCount, 0);
 
 	ms_faceCount += uPriCount;
 }

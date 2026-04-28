@@ -79,7 +79,7 @@ void CMapOutdoor::__RenderTerrain_RenderHardwareTransformPatch()
 	std::vector<std::pair<float ,long> >::iterator near_it = std::upper_bound(m_PatchVector.begin(),m_PatchVector.end(),fog_near);
 
 	WORD wPrimitiveCount;
-	D3DPRIMITIVETYPE ePrimitiveType;
+	D3D11_PRIMITIVE_TOPOLOGY ePrimitiveType;
 
 	BYTE byCUrrentLODLevel = 0;
 
@@ -207,7 +207,7 @@ void CMapOutdoor::__RenderTerrain_RenderHardwareTransformPatch()
 	STATEMANAGER.RestoreRenderState(RS11_ALPHAREF);
 }
 
-void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD wPrimitiveCount, D3DPRIMITIVETYPE ePrimitiveType)
+void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD wPrimitiveCount, D3D11_PRIMITIVE_TOPOLOGY ePrimitiveType)
 {
 	assert(NULL!=m_pTerrainPatchProxyList && "__HardwareTransformPatch_RenderPatchSplat");
 	CTerrainPatchProxy * pTerrainPatchProxy = &m_pTerrainPatchProxyList[patchnum];
@@ -283,7 +283,7 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 			STATEMANAGER.SetTextureStageState(1, TSS11_ALPHAOP,   TOP11_DISABLE);
 			STATEMANAGER.SetTexture(0, rTexture.pd3dTexture);
 			STATEMANAGER.SetTexture(1, rSplat.pd3dTexture);
-			STATEMANAGER.DrawIndexedPrimitive(ePrimitiveType, 0, m_iPatchTerrainVertexCount, 0, wPrimitiveCount);
+			STATEMANAGER.DrawIndexedPrimitive11(ePrimitiveType, 0, 0, wPrimitiveCount);
 			STATEMANAGER.SetTextureStageState(1, TSS11_ALPHAOP,   TOP11_SELECTARG1);
 			isFirst=false;
 		}
@@ -291,7 +291,7 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 		{
 			STATEMANAGER.SetTexture(0, rTexture.pd3dTexture);
 			STATEMANAGER.SetTexture(1, rSplat.pd3dTexture);
-			STATEMANAGER.DrawIndexedPrimitive(ePrimitiveType, 0, m_iPatchTerrainVertexCount, 0, wPrimitiveCount);			
+			STATEMANAGER.DrawIndexedPrimitive11(ePrimitiveType, 0, 0, wPrimitiveCount);
 		}
 
 		std::vector<int>::iterator aIterator = std::find(m_RenderedTextureNumVector.begin(), m_RenderedTextureNumVector.end(), (int)j);
@@ -317,7 +317,7 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 			
 			STATEMANAGER.SetTexture(0, NULL);
 			STATEMANAGER.SetTexture(1, rSplat.pd3dTexture);
-			STATEMANAGER.DrawIndexedPrimitive(ePrimitiveType, 0, m_iPatchTerrainVertexCount, 0, wPrimitiveCount);
+			STATEMANAGER.DrawIndexedPrimitive11(ePrimitiveType, 0, wPrimitiveCount);
 		}
 	}
 */
@@ -363,7 +363,7 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 		}
 		
 		ms_faceCount += wPrimitiveCount;
-		STATEMANAGER.DrawIndexedPrimitive(ePrimitiveType, 0, m_iPatchTerrainVertexCount, 0, wPrimitiveCount);
+		STATEMANAGER.DrawIndexedPrimitive11(ePrimitiveType, 0, 0, wPrimitiveCount);
   		++m_iRenderedSplatNum;
 
 		if (m_bDrawChrShadow)
@@ -397,7 +397,7 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 
 }
 
-void CMapOutdoor::__HardwareTransformPatch_RenderPatchNone(long patchnum, WORD wPrimitiveCount, D3DPRIMITIVETYPE ePrimitiveType)
+void CMapOutdoor::__HardwareTransformPatch_RenderPatchNone(long patchnum, WORD wPrimitiveCount, D3D11_PRIMITIVE_TOPOLOGY ePrimitiveType)
 {
 	assert(NULL!=m_pTerrainPatchProxyList && "__HardwareTransformPatch_RenderPatchNone");
 	CTerrainPatchProxy * pTerrainPatchProxy = &m_pTerrainPatchProxyList[patchnum];
@@ -411,5 +411,5 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchNone(long patchnum, WORD w
 
 	_mgr->SetShader(VF_PN);
 	_mgr->SetVertexBuffer(pkVB);
-	STATEMANAGER.DrawIndexedPrimitive(ePrimitiveType, 0, m_iPatchTerrainVertexCount, 0, wPrimitiveCount);
+	STATEMANAGER.DrawIndexedPrimitive11(ePrimitiveType, 0, 0, wPrimitiveCount);
 }

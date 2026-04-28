@@ -100,7 +100,7 @@ void CGraphicImageInstance::OnRender()
 		STATEMANAGER.SetTexture(0, pTexture->GetSRV());
 		STATEMANAGER.SetTexture(1, NULL);
 		_mgr->SetShader(VF_PDT);
-		STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 4, 0, 2);
+		STATEMANAGER.DrawIndexedPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 0, 0, 2);
 	}
 
 	STATEMANAGER.RestoreRenderState(RS11_ALPHATESTENABLE);

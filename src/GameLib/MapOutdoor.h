@@ -392,9 +392,9 @@ class CMapOutdoor : public CMapBase
 
 		void					SetPatchDrawVector();
 
-		void					NEW_DrawWireFrame(CTerrainPatchProxy * pTerrainPatchProxy, WORD wPrimitiveCount, D3DPRIMITIVETYPE ePrimitiveType);
+		void					NEW_DrawWireFrame(CTerrainPatchProxy * pTerrainPatchProxy, WORD wPrimitiveCount, D3D11_PRIMITIVE_TOPOLOGY ePrimitiveType);
 
-		void					DrawWireFrame(long patchnum, WORD wPrimitiveCount, D3DPRIMITIVETYPE ePrimitiveType);
+		void					DrawWireFrame(long patchnum, WORD wPrimitiveCount, D3D11_PRIMITIVE_TOPOLOGY ePrimitiveType);
 		void					DrawWater(long patchnum);
 
 		bool					m_bDrawWireFrame;
@@ -442,7 +442,7 @@ class CMapOutdoor : public CMapBase
 
 	protected:
 		void SetIndexBuffer();
-		void SelectIndexBuffer(BYTE byLODLevel, WORD * pwPrimitiveCount, D3DPRIMITIVETYPE * pePrimitiveType);
+		void SelectIndexBuffer(BYTE byLODLevel, WORD * pwPrimitiveCount, D3D11_PRIMITIVE_TOPOLOGY * pePrimitiveType);
 
 		D3DXMATRIX m_matWorldForCommonUse;
 		D3DXMATRIX m_matViewInverse;
@@ -560,8 +560,8 @@ class CMapOutdoor : public CMapBase
 		void __RenderTerrain_RenderHardwareTransformPatch();
 
 	protected:
-		void __HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD wPrimitiveCount, D3DPRIMITIVETYPE ePrimitiveType);
-		void __HardwareTransformPatch_RenderPatchNone(long patchnum, WORD wPrimitiveCount, D3DPRIMITIVETYPE ePrimitiveType);
+		void __HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD wPrimitiveCount, D3D11_PRIMITIVE_TOPOLOGY ePrimitiveType);
+		void __HardwareTransformPatch_RenderPatchNone(long patchnum, WORD wPrimitiveCount, D3D11_PRIMITIVE_TOPOLOGY ePrimitiveType);
 
 
 	protected:
@@ -635,8 +635,8 @@ class CMapOutdoor : public CMapBase
 		void __SoftwareTransformPatch_RestoreFogShadowRenderState();
 		void __SoftwareTransformPatch_ApplyDynamicShadowRenderState();
 		void __SoftwareTransformPatch_RestoreDynamicShadowRenderState();
-		void __SoftwareTransformPatch_RenderPatchSplat(SoftwareTransformPatch_SRenderState& rkTPRS, long patchnum, WORD wPrimitiveCount, D3DPRIMITIVETYPE ePrimitiveType, bool isFogEnable);
-		void __SoftwareTransformPatch_RenderPatchNone(SoftwareTransformPatch_SRenderState& rkTPRS, long patchnum, WORD wPrimitiveCount, D3DPRIMITIVETYPE ePrimitiveType);
+		void __SoftwareTransformPatch_RenderPatchSplat(SoftwareTransformPatch_SRenderState& rkTPRS, long patchnum, WORD wPrimitiveCount, D3D11_PRIMITIVE_TOPOLOGY ePrimitiveType, bool isFogEnable);
+		void __SoftwareTransformPatch_RenderPatchNone(SoftwareTransformPatch_SRenderState& rkTPRS, long patchnum, WORD wPrimitiveCount, D3D11_PRIMITIVE_TOPOLOGY ePrimitiveType);
 
 
 	protected:

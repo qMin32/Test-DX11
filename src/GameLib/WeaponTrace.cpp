@@ -324,10 +324,7 @@ void CWeaponTrace::Render()
 	STATEMANAGER.SetRenderState(RS11_LIGHTING, FALSE);
 	STATEMANAGER.SetTexture(0, lpTexture);
 	STATEMANAGER.SetTexture(1, NULL);
-	STATEMANAGER.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP,
-								 int(m_PDTVertexVector.size() - 2),
-								 &m_PDTVertexVector[0],
-								 sizeof(TPDTVertex));
+	STATEMANAGER.DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, (UINT)(m_PDTVertexVector.size() - 2), sizeof(TPDTVertex), m_PDTVertexVector.data());
 	
 	STATEMANAGER.SetRenderState(RS11_LIGHTING, TRUE);
 

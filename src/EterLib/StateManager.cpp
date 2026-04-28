@@ -199,10 +199,7 @@ void CStateManager::SetDefaultState()
 		stack.clear();
 
 	m_MaterialStack.clear();
-	m_FVFStack.clear();
-	m_PixelShaderStack.clear();
-	m_VertexShaderStack.clear();
-	m_VertexDeclarationStack.clear();
+
 	m_VertexProcessingStack.clear();
 	m_IndexStack.clear();
 
@@ -245,8 +242,6 @@ void CStateManager::SetDefaultState()
 	SetRenderState(RS11_FOGEND, 0);
 
 	SetRenderState(RS11_AMBIENT, 0x00000000);
-
-	SaveVertexProcessing(FALSE);
 
 	SetRenderState(RS11_SCISSORTESTENABLE, FALSE);
 
@@ -302,13 +297,9 @@ void CStateManager::SetDefaultState()
 
 
 	}
-	SetPixelShader(0);
-	SetFVF(D3DFVF_XYZ);
 
 	D3DXVECTOR4 av4Null[STATEMANAGER_MAX_VCONSTANTS];
 	memset(av4Null, 0, sizeof(av4Null));
-	SetVertexShaderConstant(0, av4Null, STATEMANAGER_MAX_VCONSTANTS);
-	SetPixelShaderConstant(0, av4Null, STATEMANAGER_MAX_PCONSTANTS);
 
 	m_bForce = false;
 }
@@ -593,135 +584,6 @@ void CStateManager::GetSamplerState(DWORD dwStage, ESamplerStateType11 Type, DWO
 	*pdwValue = m_CurrentState.m_SamplerStates[dwStage][Type];
 }
 
-// Vertex Shader
-void CStateManager::SaveVertexShader(LPDIRECT3DVERTEXSHADER9 dwShader)
-{
-	m_VertexShaderStack.push_back(m_CurrentState.m_dwVertexShader);
-	SetVertexShader(dwShader);
-}
-
-void CStateManager::RestoreVertexShader()
-{
-	SetVertexShader(m_VertexShaderStack.back());
-	m_VertexShaderStack.pop_back();
-}
-
-void CStateManager::SetVertexShader(LPDIRECT3DVERTEXSHADER9 dwShader)
-{
-	m_CurrentState.m_dwVertexShader = dwShader;
-}
-
-void CStateManager::GetVertexShader(LPDIRECT3DVERTEXSHADER9* pdwShader)
-{
-	*pdwShader = m_CurrentState.m_dwVertexShader;
-}
-
-// Vertex Processing — D3D11 has no software/hardware vertex processing toggle, no-op
-void CStateManager::SaveVertexProcessing(BOOL IsON)
-{
-	m_VertexProcessingStack.push_back(m_CurrentState.m_bVertexProcessing);
-	m_CurrentState.m_bVertexProcessing = IsON;
-}
-void CStateManager::RestoreVertexProcessing()
-{
-	if (m_VertexProcessingStack.empty()) return;
-	m_CurrentState.m_bVertexProcessing = m_VertexProcessingStack.back();
-	m_VertexProcessingStack.pop_back();
-}
-// Vertex Declaration
-void CStateManager::SaveVertexDeclaration(LPDIRECT3DVERTEXDECLARATION9 dwShader)
-{
-	m_VertexDeclarationStack.push_back(m_CurrentState.m_dwVertexDeclaration);
-	SetVertexDeclaration(dwShader);
-}
-void CStateManager::RestoreVertexDeclaration()
-{
-	SetVertexDeclaration(m_VertexDeclarationStack.back());
-	m_VertexDeclarationStack.pop_back();
-}
-void CStateManager::SetVertexDeclaration(LPDIRECT3DVERTEXDECLARATION9 dwShader)
-{
-	m_CurrentState.m_dwVertexDeclaration = dwShader;
-
-	// D3D11: Derive a synthetic FVF from the D3D9 vertex declaration so that
-	// stride-based format detection in SetStreamSource can disambiguate correctly.
-	if (dwShader)
-	{
-		D3DVERTEXELEMENT9 elements[MAX_FVF_DECL_SIZE];
-		UINT numElements = 0;
-		if (SUCCEEDED(dwShader->GetDeclaration(elements, &numElements)))
-		{
-			DWORD dwFVF = D3DFVF_XYZ;
-			int texCount = 0;
-			for (UINT i = 0; i < numElements; ++i)
-			{
-				if (elements[i].Stream == 0xFF)
-					break;
-				switch (elements[i].Usage)
-				{
-				case D3DDECLUSAGE_NORMAL:   dwFVF |= D3DFVF_NORMAL; break;
-				case D3DDECLUSAGE_COLOR:    dwFVF |= D3DFVF_DIFFUSE; break;
-				case D3DDECLUSAGE_TEXCOORD: texCount++; break;
-				}
-			}
-			dwFVF |= (texCount << D3DFVF_TEXCOUNT_SHIFT) & D3DFVF_TEXCOUNT_MASK;
-			m_CurrentState.m_dwFVF = dwFVF;
-
-			if (m_pD3D11Renderer)
-				m_pD3D11Renderer->SetVertexFormat(m_pD3D11Renderer->DetectVertexFormat(dwFVF));
-		}
-	}
-}
-void CStateManager::GetVertexDeclaration(LPDIRECT3DVERTEXDECLARATION9* pdwShader)
-{
-	*pdwShader = m_CurrentState.m_dwVertexDeclaration;
-}
-// FVF
-void CStateManager::SaveFVF(DWORD dwShader)
-{
-	m_FVFStack.push_back(m_CurrentState.m_dwFVF);
-	SetFVF(dwShader);
-}
-void CStateManager::RestoreFVF()
-{
-	SetFVF(m_FVFStack.back());
-	m_FVFStack.pop_back();
-}
-void CStateManager::SetFVF(DWORD dwShader)
-{
-	m_CurrentState.m_dwFVF = dwShader;
-
-	if (m_pD3D11Renderer)
-		m_pD3D11Renderer->SetVertexFormat(m_pD3D11Renderer->DetectVertexFormat(dwShader));
-}
-void CStateManager::GetFVF(DWORD* pdwShader)
-{
-	*pdwShader = m_CurrentState.m_dwFVF;
-}
-
-// Pixel Shader
-void CStateManager::SavePixelShader(LPDIRECT3DPIXELSHADER9 dwShader)
-{
-	m_PixelShaderStack.push_back(m_CurrentState.m_dwPixelShader);
-	SetPixelShader(dwShader);
-}
-
-void CStateManager::RestorePixelShader()
-{
-	SetPixelShader(m_PixelShaderStack.back());
-	m_PixelShaderStack.pop_back();
-}
-
-void CStateManager::SetPixelShader(LPDIRECT3DPIXELSHADER9 dwShader)
-{
-	m_CurrentState.m_dwPixelShader = dwShader;
-}
-
-void CStateManager::GetPixelShader(LPDIRECT3DPIXELSHADER9* pdwShader)
-{
-	*pdwShader = m_CurrentState.m_dwPixelShader;
-}
-
 // *** These states are cached, but not protected from multiple sends of the same value.
 // Transform
 void CStateManager::SaveTransform(ETransform Type, const D3DXMATRIX* pMatrix)
@@ -770,16 +632,6 @@ void CStateManager::GetTransform(ETransform Type, D3DXMATRIX* pOut)
 	if (idx >= SM_MAX_TRANSFORMS || !pOut)
 		return;
 	*pOut = m_CurrentState.m_Matrices[idx];
-}
-
-void CStateManager::SetVertexShaderConstant(DWORD dwRegister, CONST void* pConstantData, DWORD dwConstantCount)
-{
-	(void)dwRegister; (void)pConstantData; (void)dwConstantCount;
-}
-
-void CStateManager::SetPixelShaderConstant(DWORD dwRegister, CONST void* pConstantData, DWORD dwConstantCount)
-{
-	(void)dwRegister; (void)pConstantData; (void)dwConstantCount;
 }
 
 void CStateManager::SaveStreamSource(UINT StreamNumber, ID3D11Buffer* pStreamData, UINT Stride)
@@ -842,37 +694,20 @@ void CStateManager::SetIndices(ID3D11Buffer* pIndexData, UINT BaseVertexIndex)
 	}
 }
 
-// Helpers — D3D9 → D3D11 primitive translation
-static D3D11_PRIMITIVE_TOPOLOGY MapPrimType(D3DPRIMITIVETYPE pt)
+static UINT GetPrimitiveVertexCount(D3D11_PRIMITIVE_TOPOLOGY topology, UINT primCount)
 {
-	switch (pt)
+	switch (topology)
 	{
-	case D3DPT_POINTLIST:		return D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
-	case D3DPT_LINELIST:		return D3D11_PRIMITIVE_TOPOLOGY_LINELIST;
-	case D3DPT_LINESTRIP:		return D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP;
-	case D3DPT_TRIANGLELIST:	return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-	case D3DPT_TRIANGLESTRIP:	return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
-	case D3DPT_TRIANGLEFAN:		return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST; // expanded to trilist before draw
-	default:					return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	case D3D11_PRIMITIVE_TOPOLOGY_POINTLIST:		return primCount;
+	case D3D11_PRIMITIVE_TOPOLOGY_LINELIST:			return primCount * 2;
+	case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP:		return primCount + 1;
+	case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST:		return primCount * 3;
+	case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP:	return primCount + 2;
+	default:										return primCount * 3;
 	}
 }
 
-// Compute vertex count from primitive count for non-indexed draws
-static UINT VertexCountFromPrimCount(D3DPRIMITIVETYPE pt, UINT primCount)
-{
-	switch (pt)
-	{
-	case D3DPT_POINTLIST:		return primCount;
-	case D3DPT_LINELIST:		return primCount * 2;
-	case D3DPT_LINESTRIP:		return primCount + 1;
-	case D3DPT_TRIANGLELIST:	return primCount * 3;
-	case D3DPT_TRIANGLESTRIP:	return primCount + 2;
-	case D3DPT_TRIANGLEFAN:		return primCount + 2;
-	default:					return primCount * 3;
-	}
-}
-
-HRESULT CStateManager::DrawPrimitive(D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT PrimitiveCount)
+HRESULT CStateManager::DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY Topology, UINT PrimitiveCount, UINT StartVertex_VertexStride, const void* pVertexData)
 {
 #ifdef _DEBUG
 	++m_iDrawCallCount;
@@ -881,92 +716,51 @@ HRESULT CStateManager::DrawPrimitive(D3DPRIMITIVETYPE PrimitiveType, UINT StartV
 	if (!CGraphicBase::ms_lpd3d11Context || !m_pD3D11Renderer)
 		return E_FAIL;
 
-	m_pD3D11Renderer->FlushAllState();
-	CGraphicBase::ms_lpd3d11Context->IASetPrimitiveTopology(MapPrimType(PrimitiveType));
+	UINT vertexCount = GetPrimitiveVertexCount(Topology, PrimitiveCount);
 
-	UINT vtxCount = VertexCountFromPrimCount(PrimitiveType, PrimitiveCount);
-	CGraphicBase::ms_lpd3d11Context->Draw(vtxCount, StartVertex);
+	ID3D11Buffer* vb = nullptr;
+
+	if (pVertexData)
+	{
+		//StartVertex_VertexStride = stride
+		UINT stride = StartVertex_VertexStride;
+
+		if (!CGraphicBase::ms_lpd3d11Device || !stride)
+			return E_FAIL;
+
+		D3D11_BUFFER_DESC bd = {};
+		bd.ByteWidth = vertexCount * stride;
+		bd.Usage = D3D11_USAGE_IMMUTABLE;
+		bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+
+		D3D11_SUBRESOURCE_DATA sd = {};
+		sd.pSysMem = pVertexData;
+
+		if (FAILED(CGraphicBase::ms_lpd3d11Device->CreateBuffer(&bd, &sd, &vb)))
+			return E_FAIL;
+
+		UINT offset = 0;
+		CGraphicBase::ms_lpd3d11Context->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
+
+		StartVertex_VertexStride = 0; // = startVertex
+	}
+
+	m_pD3D11Renderer->FlushAllState();
+	CGraphicBase::ms_lpd3d11Context->IASetPrimitiveTopology(Topology);
+	CGraphicBase::ms_lpd3d11Context->Draw(vertexCount, StartVertex_VertexStride);
+
+	if (vb)
+		vb->Release();
+
 	return S_OK;
 }
 
-HRESULT CStateManager::DrawPrimitiveUP(D3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, const void* pVertexStreamZeroData, UINT VertexStreamZeroStride)
+HRESULT CStateManager::DrawIndexedPrimitive11(D3D11_PRIMITIVE_TOPOLOGY Topology, INT BaseVertexIndex, UINT StartIndex, UINT PrimitiveCount)
 {
 #ifdef _DEBUG
 	++m_iDrawCallCount;
 #endif
 
-	if (!CGraphicBase::ms_lpd3d11Context || !CGraphicBase::ms_lpd3d11Device || !m_pD3D11Renderer)
-		return E_FAIL;
-
-	// Triangle fan expansion: D3D11 doesn't support TRIANGLEFAN, so expand
-	// fan vertices (v0, v1, v2, ..., vN) into triangle list (v0,v1,v2, v0,v2,v3, ...).
-	const void* pFinalVertexData = pVertexStreamZeroData;
-	UINT finalVtxCount;
-	std::vector<BYTE> fanExpanded;
-
-	if (PrimitiveType == D3DPT_TRIANGLEFAN && PrimitiveCount >= 1)
-	{
-		UINT fanVtxCount = PrimitiveCount + 2;
-		finalVtxCount = PrimitiveCount * 3;
-		fanExpanded.resize(finalVtxCount * VertexStreamZeroStride);
-		const BYTE* pSrc = (const BYTE*)pVertexStreamZeroData;
-		BYTE* pDst = fanExpanded.data();
-		for (UINT i = 0; i < PrimitiveCount; ++i)
-		{
-			memcpy(pDst, pSrc, VertexStreamZeroStride);									// v0 (center)
-			pDst += VertexStreamZeroStride;
-			memcpy(pDst, pSrc + (i + 1) * VertexStreamZeroStride, VertexStreamZeroStride);	// v[i+1]
-			pDst += VertexStreamZeroStride;
-			memcpy(pDst, pSrc + (i + 2) * VertexStreamZeroStride, VertexStreamZeroStride);	// v[i+2]
-			pDst += VertexStreamZeroStride;
-		}
-		pFinalVertexData = fanExpanded.data();
-	}
-	else
-	{
-		finalVtxCount = VertexCountFromPrimCount(PrimitiveType, PrimitiveCount);
-	}
-
-	UINT bufSize = finalVtxCount * VertexStreamZeroStride;
-
-	// Create transient dynamic buffer for the vertex data
-	D3D11_BUFFER_DESC bd = {};
-	bd.ByteWidth = bufSize;
-	bd.Usage = D3D11_USAGE_IMMUTABLE;
-	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-
-	D3D11_SUBRESOURCE_DATA sd = {};
-	sd.pSysMem = pFinalVertexData;
-
-	ID3D11Buffer* pVB = NULL;
-	if (FAILED(CGraphicBase::ms_lpd3d11Device->CreateBuffer(&bd, &sd, &pVB)))
-		return E_FAIL;
-
-	UINT stride = VertexStreamZeroStride;
-	UINT offset = 0;
-	CGraphicBase::ms_lpd3d11Context->IASetVertexBuffers(0, 1, &pVB, &stride, &offset);
-
-	m_pD3D11Renderer->FlushAllState();
-	CGraphicBase::ms_lpd3d11Context->IASetPrimitiveTopology(MapPrimType(PrimitiveType));
-	CGraphicBase::ms_lpd3d11Context->Draw(finalVtxCount, 0);
-
-	pVB->Release();
-
-	m_CurrentState.m_StreamData[0] = CStreamData();
-	return S_OK;
-}
-
-
-HRESULT CStateManager::DrawIndexedPrimitive(D3DPRIMITIVETYPE PrimitiveType, UINT minIndex, UINT NumVertices, UINT startIndex, UINT primCount)
-{
-	return DrawIndexedPrimitive(PrimitiveType, 0, minIndex, NumVertices, startIndex, primCount);
-}
-
-HRESULT CStateManager::DrawIndexedPrimitive(D3DPRIMITIVETYPE PrimitiveType, INT baseVertexIndex, UINT minIndex, UINT NumVertices, UINT startIndex, UINT primCount)
-{
-#ifdef _DEBUG
-	++m_iDrawCallCount;
-#endif
 	++g_frameDrawCount;
 
 	UINT stride = m_CurrentState.m_StreamData[0].m_Stride;
@@ -977,21 +771,13 @@ HRESULT CStateManager::DrawIndexedPrimitive(D3DPRIMITIVETYPE PrimitiveType, INT 
 		return E_FAIL;
 
 	m_pD3D11Renderer->FlushAllState();
-	CGraphicBase::ms_lpd3d11Context->IASetPrimitiveTopology(MapPrimType(PrimitiveType));
+	CGraphicBase::ms_lpd3d11Context->IASetPrimitiveTopology(Topology);
+	CGraphicBase::ms_lpd3d11Context->DrawIndexed(GetPrimitiveVertexCount(Topology, PrimitiveCount), StartIndex, BaseVertexIndex);
 
-	UINT idxCount = VertexCountFromPrimCount(PrimitiveType, primCount);
-
-	// In D3D9, SetIndices stored a BaseVertexIndex that was added to DrawIndexedPrimitive's
-	// BaseVertexIndex. However, most game code passes the same base vertex to both calls,
-	// causing it to be doubled. Use only the DrawIndexedPrimitive base vertex to match
-	// the original D3D9 behavior where SetIndices didn't take a base vertex parameter.
-	INT finalBaseVertex = baseVertexIndex;
-
-	CGraphicBase::ms_lpd3d11Context->DrawIndexed(idxCount, startIndex, finalBaseVertex);
 	return S_OK;
 }
 
-HRESULT CStateManager::DrawIndexedPrimitiveUP(D3DPRIMITIVETYPE PrimitiveType, UINT MinVertexIndex, UINT NumVertexIndices, UINT PrimitiveCount, CONST void* pIndexData, D3DFORMAT IndexDataFormat, CONST void* pVertexStreamZeroData, UINT VertexStreamZeroStride)
+HRESULT CStateManager::DrawTriangleFan11(UINT PrimitiveCount, const void* pVertexData, UINT VertexStride)
 {
 #ifdef _DEBUG
 	++m_iDrawCallCount;
@@ -1000,95 +786,47 @@ HRESULT CStateManager::DrawIndexedPrimitiveUP(D3DPRIMITIVETYPE PrimitiveType, UI
 	if (!CGraphicBase::ms_lpd3d11Context || !CGraphicBase::ms_lpd3d11Device || !m_pD3D11Renderer)
 		return E_FAIL;
 
-	UINT idxStride = (IndexDataFormat == D3DFMT_INDEX32) ? 4u : 2u;
-
-	// Triangle fan index expansion: fan indices (i0, i1, i2, ..., iN) become
-	// triangle list indices (i0,i1,i2, i0,i2,i3, ..., i0,i[N-1],iN).
-	const void* pFinalIndexData = pIndexData;
-	UINT finalIdxCount;
-	std::vector<BYTE> fanIdxExpanded;
-
-	if (PrimitiveType == D3DPT_TRIANGLEFAN && PrimitiveCount >= 1)
-	{
-		UINT fanIdxCount = PrimitiveCount + 2;
-		finalIdxCount = PrimitiveCount * 3;
-		fanIdxExpanded.resize(finalIdxCount * idxStride);
-
-		if (idxStride == 2)
-		{
-			const WORD* pSrcIdx = (const WORD*)pIndexData;
-			WORD* pDstIdx = (WORD*)fanIdxExpanded.data();
-			for (UINT i = 0; i < PrimitiveCount; ++i)
-			{
-				pDstIdx[i * 3 + 0] = pSrcIdx[0];
-				pDstIdx[i * 3 + 1] = pSrcIdx[i + 1];
-				pDstIdx[i * 3 + 2] = pSrcIdx[i + 2];
-			}
-		}
-		else
-		{
-			const DWORD* pSrcIdx = (const DWORD*)pIndexData;
-			DWORD* pDstIdx = (DWORD*)fanIdxExpanded.data();
-			for (UINT i = 0; i < PrimitiveCount; ++i)
-			{
-				pDstIdx[i * 3 + 0] = pSrcIdx[0];
-				pDstIdx[i * 3 + 1] = pSrcIdx[i + 1];
-				pDstIdx[i * 3 + 2] = pSrcIdx[i + 2];
-			}
-		}
-		pFinalIndexData = fanIdxExpanded.data();
-	}
-	else
-	{
-		finalIdxCount = VertexCountFromPrimCount(PrimitiveType, PrimitiveCount);
-	}
-
-	UINT idxBufSize = finalIdxCount * idxStride;
-	UINT vtxBufSize = NumVertexIndices * VertexStreamZeroStride;
-
-	// Vertex buffer
-	D3D11_BUFFER_DESC vbd = {};
-	vbd.ByteWidth = vtxBufSize;
-	vbd.Usage = D3D11_USAGE_IMMUTABLE;
-	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-
-	D3D11_SUBRESOURCE_DATA vsd = {};
-	vsd.pSysMem = pVertexStreamZeroData;
-
-	ID3D11Buffer* pVB = NULL;
-	if (FAILED(CGraphicBase::ms_lpd3d11Device->CreateBuffer(&vbd, &vsd, &pVB)))
+	if (!pVertexData || !VertexStride || !PrimitiveCount)
 		return E_FAIL;
 
-	// Index buffer
-	D3D11_BUFFER_DESC ibd = {};
-	ibd.ByteWidth = idxBufSize;
-	ibd.Usage = D3D11_USAGE_IMMUTABLE;
-	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	UINT finalVertexCount = PrimitiveCount * 3;
+	std::vector<BYTE> data(finalVertexCount * VertexStride);
 
-	D3D11_SUBRESOURCE_DATA isd = {};
-	isd.pSysMem = pFinalIndexData;
+	const BYTE* src = (const BYTE*)pVertexData;
+	BYTE* dst = data.data();
 
-	ID3D11Buffer* pIB = NULL;
-	if (FAILED(CGraphicBase::ms_lpd3d11Device->CreateBuffer(&ibd, &isd, &pIB)))
+	for (UINT i = 0; i < PrimitiveCount; ++i)
 	{
-		pVB->Release();
-		return E_FAIL;
+		memcpy(dst, src, VertexStride);
+		dst += VertexStride;
+		memcpy(dst, src + (i + 1) * VertexStride, VertexStride);
+		dst += VertexStride;
+		memcpy(dst, src + (i + 2) * VertexStride, VertexStride);
+		dst += VertexStride;
 	}
 
-	UINT stride = VertexStreamZeroStride;
+	D3D11_BUFFER_DESC bd = {};
+	bd.ByteWidth = finalVertexCount * VertexStride;
+	bd.Usage = D3D11_USAGE_IMMUTABLE;
+	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+
+	D3D11_SUBRESOURCE_DATA sd = {};
+	sd.pSysMem = data.data();
+
+	ID3D11Buffer* vb = nullptr;
+	if (FAILED(CGraphicBase::ms_lpd3d11Device->CreateBuffer(&bd, &sd, &vb)))
+		return E_FAIL;
+
+	UINT stride = VertexStride;
 	UINT offset = 0;
-	CGraphicBase::ms_lpd3d11Context->IASetVertexBuffers(0, 1, &pVB, &stride, &offset);
-	CGraphicBase::ms_lpd3d11Context->IASetIndexBuffer(pIB, (idxStride == 4) ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT, 0);
+
+	CGraphicBase::ms_lpd3d11Context->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
 
 	m_pD3D11Renderer->FlushAllState();
-	CGraphicBase::ms_lpd3d11Context->IASetPrimitiveTopology(MapPrimType(PrimitiveType));
-	CGraphicBase::ms_lpd3d11Context->DrawIndexed(finalIdxCount, 0, 0);
+	CGraphicBase::ms_lpd3d11Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	CGraphicBase::ms_lpd3d11Context->Draw(finalVertexCount, 0);
 
-	pIB->Release();
-	pVB->Release();
-
-	m_CurrentState.m_IndexData = CIndexData();
-	m_CurrentState.m_StreamData[0] = CStreamData();
+	vb->Release();
 	return S_OK;
 }
 

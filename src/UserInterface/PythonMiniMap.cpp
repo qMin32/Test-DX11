@@ -310,12 +310,12 @@ void CPythonMiniMap::Render(float fScreenX, float fScreenY)
 		if (pMiniMapTexture)
 		{
 			CStateManager& rkSttMgr=CStateManager::Instance();
-			rkSttMgr.DrawIndexedPrimitive(D3DPT_TRIANGLELIST, byTerrainNum * 4, 4, byTerrainNum * 6, 2);
+			rkSttMgr.DrawIndexedPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, byTerrainNum * 4, byTerrainNum * 6, 2);
 		}
 		else
 		{
 			STATEMANAGER.SetTextureStageState(0, TSS11_COLORARG1, TA11_TFACTOR);
-			STATEMANAGER.DrawIndexedPrimitive(D3DPT_TRIANGLELIST, byTerrainNum * 4, 4, byTerrainNum * 6, 2);
+			STATEMANAGER.DrawIndexedPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, byTerrainNum * 4, byTerrainNum * 6, 2);
 			STATEMANAGER.SetTextureStageState(0, TSS11_COLORARG1, TA11_TEXTURE);
 		}
 	}

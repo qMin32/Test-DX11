@@ -259,7 +259,7 @@ void CLensFlare::DrawBeforeFlare()
 	STATEMANAGER.SetTextureStageState(0, TSS11_COLORARG1, TA11_TEXTURE);
 	
 	_mgr->SetShader(VF_PDT);
-	STATEMANAGER.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, vertices, sizeof(SVertex));
+	STATEMANAGER.DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, 2, sizeof(TVertex), vertices);
 
 	STATEMANAGER.RestoreRenderState(RS11_LIGHTING);
 	STATEMANAGER.RestoreRenderState(RS11_ZENABLE); // glDisable(GL_DEPTH_TEST);
@@ -588,7 +588,7 @@ void CFlare::Draw(float fBrightScale, int nWidth, int nHeight, int nX, int nY)
 		vertices[3].z = 0.0f;
 		vertices[3].color = d3dColor;
 
-		STATEMANAGER.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, vertices, sizeof(TVertex));
+		STATEMANAGER.DrawPrimitive11(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, 2, sizeof(TVertex), vertices);
 	}
 
 	STATEMANAGER.RestoreRenderState(RS11_DESTBLEND);
